@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="tj">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zerohub Code Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #000000;
+      --header-bg: #121212;
+      --accent: #00e676;
+      --text: #ffffff;
+      --sidebar-bg: #1e1e1e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: monospace; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ПАНЕЛИ БОЛОӢ */
+    .app-header {
+      background: var(--header-bg);
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      border-bottom: 1px solid #222;
+      position: relative;
+    }
+
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .btn-play {
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .file-name-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #e0e0e0;
+      font-family: sans-serif;
+    }
+
+    /* МЕНЮИ 3 НУҚТА */
+    .dropdown-menu {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      background: #252526;
+      border: 1px solid #333;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      min-width: 140px;
+    }
+
+    .dropdown-menu.show { display: flex; }
+
+    .dropdown-item {
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: #fff;
+      text-align: left;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: sans-serif;
+    }
+
+    .dropdown-item:hover { background: #333; }
+    .dropdown-item.delete { color: #ff5252; }
+
+    /* SIDEBAR */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      z-index: 200;
+    }
+
+    .sidebar-overlay.show { display: block; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: -280px;
+      width: 280px; height: 100vh;
+      background: var(--sidebar-bg);
+      transition: left 0.3s ease;
+      z-index: 201;
+      display: flex;
+      flex-direction: column;
+      font-family: sans-serif;
+    }
+
+    .sidebar.open { left: 0; }
+
+    .sidebar-header {
+      padding: 15px;
+      background: #121212;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    .btn-new-proj {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .project-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .project-item {
+      padding: 12px 15px;
+      margin-bottom: 6px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #ccc;
+    }
+
+    .project-item.active {
+      background: #383838;
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+    }
+
+    /* РЕДАКТОР */
+    .editor-container {
+      flex: 1;
+      position: relative;
+      background: #000;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100%;
+      background: #0d0d0d;
+      color: #00e676;
+      border: none;
+      padding: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+      outline: none;
+      resize: none;
+      white-space: pre;
+      tab-size: 2;
+    }
+
+    /* ЭКРАНИ НАТИҶА */
+    .preview-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #ffffff;
+      display: none;
+      flex-direction: column;
+      z-index: 300;
+    }
+
+    .preview-modal.show { display: flex; }
+
+    .preview-header {
+      background: #121212;
+      color: #fff;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: sans-serif;
+    }
+
+    .btn-close {
+      background: #ff5252;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    iframe { flex: 1; border: none; width: 100%; height: 100%; background: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span class="file-name-title" id="currentFileName">test.html</span>
+    </div>
+
+    <div class="header-right">
+      <button class="icon-btn btn-play" onclick="runCode()"><i class="fa-solid fa-play"></i></button>
+      <button class="icon-btn" onclick="toggleDotsMenu()"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+    </div>
+
+    <div class="dropdown-menu" id="dotsMenu">
+      <button class="dropdown-item" onclick="saveCode()"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+      <button class="dropdown-item delete" onclick="deleteCode()"><i class="fa-solid fa-trash"></i> Удалить</button>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>Лоиҳаҳои ман</span>
+      <button class="btn-new-proj" onclick="createNewProject()">+ Нав</button>
+    </div>
+    <div class="project-list" id="projectList"></div>
+  </div>
+
+  <div class="editor-container">
+    <textarea id="codeEditor" placeholder="Кодро дар ин ҷо нависед..." oninput="autoSave()"></textarea>
+  </div>
+
+  <div class="preview-modal" id="previewModal">
+    <div class="preview-header">
+      <span>Натиҷа (Result)</span>
+      <button class="btn-close" onclick="closePreview()">Пӯшидан</button>
+    </div>
+    <iframe id="previewFrame"></iframe>
+  </div>
+
+  <script>
+    let projects = JSON.parse(localStorage.getItem('zerohub_acode_projects')) || [];
+    let currentId = null;
+
+    if (projects.length === 0) {
+      createNewProject("test.html", `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { background: #0f172a; color: #fff; text-align: center; padding-top: 50px; font-family: sans-serif; }
+    button { background: #00e676; border: none; padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 16px; color: #000; }
+  </style>
+</head>
+<body>
+  <h1>Zerohub Code Editor</h1>
+  <p>Коди шумо бо муваффақият иҷро шуд!</p>
+  <br>
+  <button onclick="alert('Офарин! Барнома аъло кор мекунад!')">Зер кун!</button>
+</body>
+</html>`);
+    } else {
+      currentId = projects[0].id;
+      renderProjects();
+      loadProject();
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+
+    function toggleDotsMenu() {
+      document.getElementById('dotsMenu').classList.toggle('show');
+    }
+
+    function createNewProject(name, initialCode) {
+      const projName = name || prompt("Номи лоиҳаро ворид кунед:", "project.html");
+      if (!projName) return;
+
+      const newProj = {
+        id: Date.now(),
+        name: projName.endsWith('.html') ? projName : projName + '.html',
+        code: initialCode || `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }\n  </style>\n</head>\n<body>\n  <h1>Лоиҳаи нав</h1>\n</body>\n</html>`
+      };
+
+      projects.unshift(newProj);
+      currentId = newProj.id;
+      saveStorage();
+      renderProjects();
+      loadProject();
+      if (document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+    }
+
+    function renderProjects() {
+      const listContainer = document.getElementById('projectList');
+      listContainer.innerHTML = '';
+
+      projects.forEach(p => {
+        const item = document.createElement('div');
+        item.className = `project-item ${p.id === currentId ? 'active' : ''}`;
+        item.onclick = () => selectProject(p.id);
+        item.innerHTML = `<i class="fa-brands fa-html5" style="color: #e44d26;"></i> <span>${p.name}</span>`;
+        listContainer.appendChild(item);
+      });
+    }
+
+    function selectProject(id) {
+      currentId = id;
+      renderProjects();
+      loadProject();
+      toggleSidebar();
+    }
+
+    function loadProject() {
+      const p = projects.find(item => item.id === currentId);
+      if (p) {
+        document.getElementById('currentFileName').innerText = p.name;
+        document.getElementById('codeEditor').value = p.code;
+      }
+    }
+
+    function autoSave() {
+      const p = projects.find(item => item.id === currentId);
+      if (p) {
+        p.code = document.getElementById('codeEditor').value;
+        saveStorage();
+      }
+    }
+
+    function saveCode() {
+      autoSave();
+      alert("Лоиҳа бо муваффақият сабт шуд!");
+      toggleDotsMenu();
+    }
+
+    function deleteCode() {
+      if (projects.length <= 1) {
+        alert("Ҳадди ақал як лоиҳа бояд боқӣ монад!");
+        toggleDotsMenu();
+        return;
+      }
+
+      if (confirm("Оё мехоҳед ин лоиҳаро нест кунед?")) {
+        projects = projects.filter(p => p.id !== currentId);
+        currentId = projects[0].id;
+        saveStorage();
+        renderProjects();
+        loadProject();
+        toggleDotsMenu();
+      }
+    }
+
+    function saveStorage() {
+      localStorage.setItem('zerohub_acode_projects', JSON.stringify(projects));
+    }
+
+    /* ИСЛОҲИ АСОСИИ ИҶРОИ КОД (RUN CODE FIX) */
+    function runCode() {
+      const code = document.getElementById('codeEditor').value;
+      const frame = document.getElementById('previewFrame');
+      
+      document.getElementById('previewModal').classList.add('show');
+
+      // Навиштани мустақими код ба даруни iframe
+      const frameDoc = frame.contentDocument || frame.contentWindow.document;
+      frameDoc.open();
+      frameDoc.write(code);
+      frameDoc.close();
+
+      if (document.getElementById('dotsMenu').classList.contains('show')) {
+        toggleDotsMenu();
+      }
+    }
+
+    function closePreview() {
+      document.getElementById('previewModal').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
