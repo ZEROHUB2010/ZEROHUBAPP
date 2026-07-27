@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="tj">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZEROHUBUI GENERATOR</title>
+
+  <!-- PWA & Icon Configuration -->
+  <meta name="theme-color" content="#080b10">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZH GENERATOR">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23080b10'/><circle cx='50' cy='50' r='35' fill='none' stroke='url(%23g)' stroke-width='8'/><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23ff007a'/><stop offset='100%25' stop-color='%237e00ff'/></linearGradient></defs></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23080b10'/><circle cx='50' cy='50' r='35' fill='none' stroke='url(%23g)' stroke-width='8'/><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%23ff007a'/><stop offset='100%25' stop-color='%237e00ff'/></linearGradient></defs></svg>">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    :root {
+      --primary: #ff007a;
+      --secondary: #7e00ff;
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --neon-gradient: linear-gradient(135deg, #ff007a 0%, #7e00ff 100%);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #080b10;
+      color: #ffffff;
+      margin: 0;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('https://images.unsplash.com/photo-1614850523296-e84529ecad42?auto=format&fit=crop&q=80&w=2000') center/cover no-repeat;
+      filter: brightness(0.4) saturate(1.2);
+      z-index: -1;
+    }
+
+    /* SPLASH SCREEN */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: #080b10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.8s ease-in-out, visibility 0.8s;
+    }
+
+    .splash-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: var(--neon-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(255, 0, 122, 0.3);
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    .gemini-footer {
+      position: absolute;
+      bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .gemini-star {
+      width: 22px;
+      height: 22px;
+      fill: url(#gemini-gradient);
+      filter: drop-shadow(0 0 8px rgba(155, 81, 224, 0.6));
+    }
+
+    /* GLASS DESIGN */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 24px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .neon-text {
+      background: var(--neon-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .neon-button {
+      background: var(--neon-gradient);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    @keyframes pulse-neon {
+      0% { box-shadow: 0 0 0 0 rgba(255, 0, 122, 0.7); transform: scale(1); }
+      50% { box-shadow: 0 0 25px 10px rgba(126, 0, 255, 0.4); transform: scale(1.02); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 0, 122, 0); transform: scale(1); }
+    }
+
+    .btn-pulse {
+      animation: pulse-neon 2s infinite;
+    }
+
+    .glass-input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 12px;
+      color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .glass-input:focus {
+      outline: none;
+      border-color: #ff007a;
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 15px rgba(255, 0, 122, 0.2);
+    }
+
+    #preview-modal {
+      background: rgba(8, 11, 16, 0.9);
+      backdrop-filter: blur(20px);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-overlay"></div>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen">
+    <div class="splash-title">ZEROHUBUI<br>GENERATOR APP</div>
+    <div class="gemini-footer">
+      <svg class="gemini-star" viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id="gemini-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4285f4" />
+            <stop offset="50%" style="stop-color:#9b51e0" />
+            <stop offset="100%" style="stop-color:#e91e63" />
+          </linearGradient>
+        </defs>
+        <path d="M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5L12,2Z" />
+      </svg>
+      POWERED BY GEMINI
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <main class="max-w-2xl mx-auto px-6 py-8 space-y-6">
+    <header class="flex justify-between items-center py-2">
+      <div class="flex items-center gap-3">
+        <span class="material-icons-round neon-text text-3xl">auto_awesome</span>
+        <h1 class="text-xl font-bold tracking-tight">ZEROHUBUI <span class="neon-text">GENERATOR</span></h1>
+      </div>
+    </header>
+
+    <section class="glass-card p-6 space-y-5">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="material-icons-round text-primary">edit_note</span>
+        <h2 class="text-lg font-bold">Танзимоти Барнома</h2>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Номи Барнома (App Name)</label>
+          <input type="text" id="appName" placeholder="Масалан: ZEROHUB OS" class="glass-input w-full p-3 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Номи Пакет (Package Name)</label>
+          <input type="text" id="packageName" placeholder="com.zerohub.app" class="glass-input w-full p-3 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Линки Иконка (App Icon URL)</label>
+          <input type="text" id="iconUrl" placeholder="https://..." class="glass-input w-full p-3 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">КОДИ ПУРРА (HTML / CSS / JS)</label>
+          <textarea id="sourceCode" rows="6" placeholder="Коди пурраи сайтро дар инҷо гузоред..." class="glass-input w-full p-3 font-mono text-xs"></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 pt-2">
+        <button id="previewBtn" class="glass-card flex items-center justify-center gap-2 p-3 font-bold text-sm hover:bg-white/10">
+          <span class="material-icons-round text-base">visibility</span> ПЕШНАМОИШ (PREVIEW)
+        </button>
+        <button id="generateBtn" disabled class="neon-button disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 p-4 rounded-xl font-black text-base tracking-widest">
+          <span class="material-icons-round">inventory_2</span> GENERATE CLEAN APK
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div id="preview-modal" class="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg h-[80vh] flex flex-col overflow-hidden relative">
+      <div class="p-3 border-b border-white/10 flex justify-between items-center bg-white/5">
+        <span class="text-xs font-bold">ПЕШНАМОИШИ БАРНОМА</span>
+        <button id="closePreview" class="material-icons-round text-gray-400">close</button>
+      </div>
+      <iframe id="previewFrame" class="flex-1 w-full border-none bg-white"></iframe>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => { splash.style.visibility = 'hidden'; }, 800);
+      }, 2500);
+    });
+
+    const inputs = ['appName', 'packageName', 'sourceCode'];
+    const genBtn = document.getElementById('generateBtn');
+    const previewBtn = document.getElementById('previewBtn');
+
+    function validateForm() {
+      const isValid = inputs.every(id => document.getElementById(id).value.trim().length > 0);
+      genBtn.disabled = !isValid;
+      if (isValid) {
+        genBtn.classList.add('btn-pulse');
+      } else {
+        genBtn.classList.remove('btn-pulse');
+      }
+    }
+
+    inputs.forEach(id => {
+      document.getElementById(id).addEventListener('input', validateForm);
+    });
+
+    previewBtn.addEventListener('click', () => {
+      const code = document.getElementById('sourceCode').value;
+      const iframe = document.getElementById('previewFrame');
+      const modal = document.getElementById('preview-modal');
+      modal.style.display = 'flex';
+      const blob = new Blob([code], { type: 'text/html' });
+      iframe.src = URL.createObjectURL(blob);
+    });
+
+    document.getElementById('closePreview').addEventListener('click', () => {
+      document.getElementById('preview-modal').style.display = 'none';
+    });
+
+    genBtn.addEventListener('click', () => {
+      const name = document.getElementById('appName').value;
+      genBtn.textContent = 'BUILDING...';
+      genBtn.disabled = true;
+      setTimeout(() => {
+        const code = document.getElementById('sourceCode').value;
+        const blob = new Blob([code], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${name.replace(/\s+/g, '_')}_clean_build.html`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        genBtn.textContent = 'GENERATE CLEAN APK';
+        genBtn.disabled = false;
+        alert('Файли шумо бо муваффақият омода шуд!');
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
