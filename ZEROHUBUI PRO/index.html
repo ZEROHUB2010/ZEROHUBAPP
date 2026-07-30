@@ -108,14 +108,7 @@
   /* Save sidebar (left) */
   .save-sidebar{
     transition: transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease;
-    will-change: transform, opacity;
   }
-
-  /* overlay behind sidebar when open (optional - small dim) */
-  .sidebar-backdrop{
-    position:fixed; inset:0; z-index:45; background:rgba(0,0,0,0.45); opacity:0; pointer-events:none; transition:opacity .18s ease;
-  }
-  .sidebar-backdrop.visible{ opacity:1; pointer-events:auto; }
 </style>
 </head>
 <body class="h-full w-full">
@@ -159,40 +152,14 @@
   <div id="canvas"></div>
 </div>
 
-<!-- top bar: menu (hamburger) + file name + save button -->
-<div class="fixed top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-50 pointer-events-none">
+<!-- top bar: file name + save button -->
+<div class="fixed top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-30 pointer-events-none">
   <div class="flex items-center gap-3 pointer-events-auto">
-    <!-- HAMBURGER: 3 хат -->
-    <button id="menuToggleBtn" class="tool-btn rounded-md px-2 py-1 mr-1 pointer-events-auto" title="Захираҳо">
-      <span style="display:inline-block; transform:translateY(1px);">
-        <svg width="18" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;color:var(--neon-cyan)">
-          <rect x="3" y="5" width="18" height="2" rx="1" fill="currentColor"/>
-          <rect x="3" y="11" width="18" height="2" rx="1" fill="currentColor"/>
-          <rect x="3" y="17" width="18" height="2" rx="1" fill="currentColor"/>
-        </svg>
-      </span>
-    </button>
-
     <span class="text-[11px] font-bold neon-text" style="font-family:'Poppins',sans-serif;">ZEROHUB <span class="text-[var(--neon-cyan)]">PRO</span></span>
     <!-- Save button -->
     <button id="saveBtn" class="tool-btn rounded-lg px-3 py-1 text-[12px] font-medium pointer-events-auto">САБТ КАРДАН</button>
   </div>
   <span id="canvasInfo" class="text-[10px] text-gray-400 pointer-events-auto"></span>
-</div>
-
-<!-- backdrop for sidebar -->
-<div id="sidebarBackdrop" class="sidebar-backdrop"></div>
-
-<!-- ============ SAVE SIDEBAR (hidden initially) ============ -->
-<div id="saveSidebar" class="save-sidebar fixed z-50 top-0 left-0 h-full w-1/2 max-w-[520px] overflow-auto glass neon-border rounded-r-2xl p-4 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon">
-  <div class="flex items-center justify-between mb-3">
-    <span class="font-bold text-[var(--neon-cyan)]">ЗАХИРАҲО</span>
-    <div class="flex items-center gap-2">
-      <button id="importBtn" class="tool-btn px-2 py-1 text-[11px]">ИМПОРТ</button>
-      <button id="closeSaveSidebar" class="tool-btn px-2 py-1 text-[11px]">✕</button>
-    </div>
-  </div>
-  <div id="savesList" class="flex flex-col gap-2"></div>
 </div>
 
 <!-- ============ COMPACT DRAWER (tools) ============ -->
@@ -225,6 +192,15 @@
       <button id="delBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px] text-red-400">Нест кардан</button>
     </div>
   </div>
+</div>
+
+<!-- ============ SAVE SIDEBAR (hidden initially) ============ -->
+<div id="saveSidebar" class="save-sidebar fixed z-50 top-16 left-4 w-72 max-h-[80vh] overflow-auto glass neon-border rounded-2xl p-3 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon">
+  <div class="flex items-center justify-between mb-2">
+    <span class="font-bold text-[var(--neon-cyan)]">ЗАХИРАҲО</span>
+    <button id="closeSaveSidebar" class="text-gray-400">✕</button>
+  </div>
+  <div id="savesList" class="flex flex-col gap-2"></div>
 </div>
 
 <input id="imgFileInput" type="file" accept="image/*" class="hidden">
@@ -292,9 +268,7 @@ const fabBtn = document.getElementById('fabBtn');
 const toolDrawer = document.getElementById('toolDrawer');
 const propPanel = document.getElementById('propPanel');
 const saveSidebar = document.getElementById('saveSidebar');
-const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 let drawerOpen = false;
-let saveSidebarOpen = false;
 
 function toggleDrawer(){
   drawerOpen = !drawerOpen;
@@ -311,32 +285,17 @@ function setPanelState(panel, open){
   }
 }
 function setSidebarState(open){
-  saveSidebarOpen = !!open;
   if(open){
     saveSidebar.classList.remove('opacity-0','pointer-events-none');
     saveSidebar.style.transform = 'translateX(0)';
     saveSidebar.style.opacity = '1';
-    sidebarBackdrop.classList.add('visible');
   } else {
     saveSidebar.classList.add('opacity-0','pointer-events-none');
     saveSidebar.style.transform = 'translateX(-100%)';
     saveSidebar.style.opacity = '0';
-    sidebarBackdrop.classList.remove('visible');
   }
 }
 fabBtn.onclick = toggleDrawer;
-
-/* ==================== Sidebar toggle (hamburger) ==================== */
-const menuToggleBtn = document.getElementById('menuToggleBtn');
-menuToggleBtn.onclick = ()=>{
-  // toggle half-screen sidebar visibility
-  setSidebarState(!saveSidebarOpen);
-  // ensure saves list populated
-  renderSavesList();
-};
-// close when clicking backdrop or close button
-document.getElementById('closeSaveSidebar').onclick = ()=> setSidebarState(false);
-sidebarBackdrop.addEventListener('click', ()=> setSidebarState(false));
 
 /* ==================== TOOLS DEFINITION ==================== */
 const TOOLS = [
@@ -388,7 +347,7 @@ function baseElement(type, overrides={}){
 
 function addShape(kind){
   if(kind==='rect') baseElement('rect', {radius:0});
-  if(kind==='circle') baseElement('circle', {radius:9999, w:110, h:110});
+  if(kind==='circle') baseElement('circle', {radius:300, w:110, h:110});
   if(kind==='rounded') baseElement('rect', {radius:20});
 }
 function addText(){
@@ -405,7 +364,7 @@ function addEmoji(){
   baseElement('emoji', {w:70,h:70, content:em, color:'transparent', fontSize:52});
 }
 function addWaterOverlay(){
-  baseElement('water', {w:180,h:220, color:'#2ef8ff', opacity:0.22});
+  baseElement('water', {w:180,h:220, radius:90, color:'#2ef8ff', opacity:0.22});
 }
 function handleImageUpload(file){
   const reader = new FileReader();
@@ -438,7 +397,7 @@ function renderElement(el){
   node.style.width = el.w+'px';
   node.style.height = el.h+'px';
   node.style.zIndex = el.zIndex;
-  node.style.borderRadius = el.type==='circle' ? '50%' : (el.radius||0)+'px';
+  node.style.borderRadius = (el.radius||0)+'px';
   node.style.opacity = 1; // opacity applied to inner fill, not whole node (so borders/handles stay crisp)
 
   // clear content except handle
@@ -586,8 +545,8 @@ function refreshPropPanel(){
   if(el.type==='rect'||el.type==='circle'||el.type==='water'){
     body.appendChild(row('Шаффофият (Opacity)', `<input type="range" id="propOpacity" min="0" max="1" step="0.01" value="${el.opacity}" class="w-full">`));
   }
-  if(el.type==='rect'||el.type==='image'){
-    body.appendChild(row('Радиуси кунҷ (Radius)', `<input type="range" id="propRadius" min="0" max="100" value="${el.radius||0}" class="w-full">`));
+  if(el.type==='rect'||el.type==='image'||el.type==='circle'||el.type==='water'){
+    body.appendChild(row('Радиуси кунҷ (Radius)', `<input type="range" id="propRadius" min="0" max="300" value="${el.radius||0}" class="w-full">`));
   }
   if(el.type==='text'){
     body.appendChild(row('Матн', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
@@ -757,7 +716,7 @@ function renderSavesList(){
   if(list.length===0){ container.innerHTML = '<p class="text-gray-400 text-[12px]">Ҳеҷ захирае вуҷуд надорад</p>'; return; }
   list.forEach((s, idx)=>{
     const it = document.createElement('div');
-    it.className = 'bg-black/30 border border-purple-600 rounded-lg p-3 flex items-center justify-between';
+    it.className = 'bg-black/30 border border-purple-600 rounded-lg p-2 flex items-center justify-between';
     it.innerHTML = `<div class="flex flex-col">
         <strong class="text-[13px]">${s.name}</strong>
         <span class="text-[11px] text-gray-400">${new Date(s.date).toLocaleString()}</span>
@@ -765,7 +724,6 @@ function renderSavesList(){
       <div class="flex gap-1">
         <button class="tool-btn px-2 py-1 text-[11px]" data-idx="${idx}" data-action="load">Бор кардан</button>
         <button class="tool-btn px-2 py-1 text-[11px]" data-idx="${idx}" data-action="download">Зеркашӣ</button>
-        <button class="tool-btn px-2 py-1 text-[11px]" data-idx="${idx}" data-action="delete">Ҳазф</button>
       </div>`;
     container.appendChild(it);
     it.querySelectorAll('button').forEach(b=>{
@@ -774,7 +732,6 @@ function renderSavesList(){
         const a = b.getAttribute('data-action');
         if(a==='load') loadSave(i);
         if(a==='download') downloadSave(i);
-        if(a==='delete') deleteSave(i);
       });
     });
   });
@@ -814,14 +771,6 @@ function downloadSave(index){
   a.remove();
   URL.revokeObjectURL(url);
 }
-function deleteSave(index){
-  const list = loadSavesFromStorage();
-  if(!list[index]) return;
-  if(!confirm('Оё воқеан мехоҳед ин захираро ҳазф кунед?')) return;
-  list.splice(index,1);
-  saveSavesToStorage(list);
-  renderSavesList();
-}
 
 /* ==================== SAVE BUTTON HOOKS ==================== */
 document.getElementById('saveBtn').onclick = ()=>{
@@ -830,46 +779,14 @@ document.getElementById('saveBtn').onclick = ()=>{
   saveCurrentState(name);
   setSidebarState(true); // open sidebar to show saved items
 };
+document.getElementById('closeSaveSidebar').onclick = ()=> setSidebarState(false);
 
-// import (optional) - allow user to import a previously downloaded JSON to restore into saves list
-document.getElementById('importBtn').onclick = ()=>{
-  const input = document.createElement('input');
-  input.type='file'; input.accept='application/json';
-  input.onchange = (e)=>{
-    const f = e.target.files[0];
-    if(!f) return;
-    const rdr = new FileReader();
-    rdr.onload = ev=>{
-      try{
-        const parsed = JSON.parse(ev.target.result);
-        // if parsed has CANVAS/elements, we can add as a save
-        const list = loadSavesFromStorage();
-        list.unshift({ name: f.name.replace(/\.json$/,'') || 'import', date: (new Date()).toISOString(), data: parsed });
-        saveSavesToStorage(list);
-        renderSavesList();
-        alert('Импорт анҷом ёфт');
-      }catch(err){ alert('Формати файл нодуруст аст'); }
-    };
-    rdr.readAsText(f);
-  };
-  input.click();
-};
+// on load: render saves list so opening later shows existing saves
+renderSavesList();
 
 /* ==================== small helpers for keyboard issue: already handled in refreshPropPanel ==================== */
 
-/* ==================== INITIALIZE SAVES ON LOAD ==================== */
-// Ensure saves are shown across reloads and sidebar toggle is connected
-window.addEventListener('load', ()=>{
-  // render saves so they persistently exist after reload
-  renderSavesList();
-  // keep sidebar closed initially
-  setSidebarState(false);
-  // initialize canvas if modal was already closed previously (so user can refresh after closing modal)
-  try{ initCanvas(); }catch(e){}
-});
-
-/* --- rest of code unchanged (end) --- */
-
+// --- end of script
 </script>
 </body>
 </html>
