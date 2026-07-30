@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZEROHUB Studio Mobile Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto:wght@400;500;700&family=Poppins:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<style>
+  :root{
+    --neon-pink:#ff2ec4;
+    --neon-purple:#8b2eff;
+    --neon-cyan:#2ef8ff;
+    --panel-bg:rgba(15,15,20,0.92);
+    --border-neon: 1px solid rgba(255,46,196,0.55);
+  }
+  *{-webkit-tap-highlight-color:transparent; box-sizing:border-box;}
+  html,body{
+    background:#050507;
+    color:#f2f2f7;
+    font-family:'Inter',sans-serif;
+    overscroll-behavior:none;
+    height:100%;
+    margin:0;
+  }
+  /* CRITICAL: 0px blur enforced everywhere - no glassmorphism blur */
+  .glass{
+    background: rgba(20,20,28,0.85);
+    backdrop-filter: blur(0px) !important;
+    -webkit-backdrop-filter: blur(0px) !important;
+    border: var(--border-neon);
+  }
+  .neon-border{ border:1px solid var(--neon-pink); box-shadow:0 0 8px rgba(255,46,196,0.5), inset 0 0 8px rgba(255,46,196,0.08); }
+  .neon-border-purple{ border:1px solid var(--neon-purple); box-shadow:0 0 8px rgba(139,46,255,0.5); }
+  .neon-text{ text-shadow:0 0 6px rgba(255,46,196,0.8); }
+  .scrollbar-neon::-webkit-scrollbar{width:6px;height:6px;}
+  .scrollbar-neon::-webkit-scrollbar-thumb{background:var(--neon-pink); border-radius:4px;}
+  .scrollbar-neon::-webkit-scrollbar-track{background:#111;}
+
+  #canvasStage{
+    background:
+      linear-gradient(rgba(255,46,196,0.06) 1px, transparent 1px) 0 0/20px 20px,
+      linear-gradient(90deg, rgba(139,46,255,0.06) 1px, transparent 1px) 0 0/20px 20px,
+      #0a0a0d;
+  }
+  #canvas{
+    position:relative;
+    overflow:hidden;
+    touch-action:none;
+  }
+  .el-node{
+    position:absolute;
+    touch-action:none;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+  }
+  .el-node.selected{
+    outline:2px solid var(--neon-cyan);
+    box-shadow:0 0 10px rgba(46,248,255,0.7);
+  }
+  .resize-handle{
+    position:absolute;
+    right:-8px;
+    bottom:-8px;
+    width:18px;
+    height:18px;
+    background:var(--neon-cyan);
+    border-radius:50%;
+    box-shadow:0 0 6px rgba(46,248,255,0.9);
+    touch-action:none;
+    cursor:nwse-resize;
+    display:none;
+  }
+  .el-node.selected .resize-handle{ display:block; }
+
+  .fab-btn{
+    width:40px;height:40px;
+    background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));
+    box-shadow:0 0 14px rgba(255,46,196,0.7), 0 0 4px rgba(139,46,255,0.8);
+  }
+  .tool-btn{
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,46,196,0.25);
+    transition:all .15s ease;
+  }
+  .tool-btn:active{ transform:scale(0.95); background:rgba(255,46,196,0.15); }
+  .tool-hint{
+    font-size:9px;
+    line-height:1.15;
+    color:#a0a0ab;
+    display:block;
+    margin-top:2px;
+  }
+  input[type=range]{ accent-color: var(--neon-pink); }
+  input[type=color]{ -webkit-appearance:none; border:none; background:none; width:32px; height:32px; padding:0; }
+  input[type=color]::-webkit-color-swatch-wrapper{ padding:0; }
+  input[type=color]::-webkit-color-swatch{ border:2px solid var(--neon-pink); border-radius:6px; }
+
+  .drawer-anim{ transition: transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease; }
+  .layer-row{ background:rgba(255,255,255,0.03); border:1px solid rgba(139,46,255,0.25); }
+  .layer-row.active{ border-color:var(--neon-cyan); box-shadow:0 0 6px rgba(46,248,255,0.5); }
+</style>
+</head>
+<body class="h-full w-full">
+
+<!-- ============ SETUP MODAL: интихоби андоза ва ранги замина ============ -->
+<div id="setupModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+  <div class="glass neon-border rounded-2xl w-full max-w-sm p-5 scrollbar-neon overflow-y-auto max-h-[90vh]">
+    <h1 class="text-xl font-black neon-text mb-1" style="font-family:'Poppins',sans-serif;">ZEROHUB STUDIO <span class="text-[var(--neon-cyan)]">MOBILE PRO</span></h1>
+    <p class="text-xs text-gray-400 mb-4">Танзими варақи кориро интихоб намоед</p>
+
+    <label class="text-xs text-gray-300 block mb-1">Андозаи экран (Preset)</label>
+    <div id="presetGrid" class="grid grid-cols-2 gap-2 mb-3 text-xs"></div>
+
+    <div class="flex gap-2 mb-3">
+      <div class="flex-1">
+        <label class="text-xs text-gray-300 block mb-1">Ширина (px)</label>
+        <input id="setupW" type="number" value="390" class="w-full bg-black/60 neon-border rounded-lg px-2 py-2 text-sm outline-none">
+      </div>
+      <div class="flex-1">
+        <label class="text-xs text-gray-300 block mb-1">Баландӣ (px)</label>
+        <input id="setupH" type="number" value="844" class="w-full bg-black/60 neon-border rounded-lg px-2 py-2 text-sm outline-none">
+      </div>
+    </div>
+
+    <label class="text-xs text-gray-300 block mb-1">Ранги заминаи варақ (HEX)</label>
+    <div class="flex items-center gap-2 mb-2">
+      <input id="setupColor" type="color" value="#ffffff">
+      <input id="setupColorHex" type="text" value="#ffffff" class="flex-1 bg-black/60 neon-border rounded-lg px-2 py-2 text-sm outline-none font-mono">
+    </div>
+    <label class="text-xs text-gray-300 block mb-1">Шаффофият (Opacity)</label>
+    <input id="setupOpacity" type="range" min="0" max="1" step="0.01" value="1" class="w-full mb-4">
+
+    <button id="startBtn" class="w-full py-3 rounded-xl font-bold text-sm neon-border" style="background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));">
+      ОҒОЗ КАРДАН →
+    </button>
+  </div>
+</div>
+
+<!-- ============ MAIN STAGE ============ -->
+<div id="canvasStage" class="fixed inset-0 flex items-center justify-center overflow-auto scrollbar-neon">
+  <div id="canvas"></div>
+</div>
+
+<!-- top bar: file name -->
+<div class="fixed top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-30 pointer-events-none">
+  <span class="text-[11px] font-bold neon-text pointer-events-auto" style="font-family:'Poppins',sans-serif;">ZEROHUB <span class="text-[var(--neon-cyan)]">PRO</span></span>
+  <span id="canvasInfo" class="text-[10px] text-gray-400 pointer-events-auto"></span>
+</div>
+
+<!-- ============ FAB TOGGLE ============ -->
+<button id="fabBtn" class="fab-btn fixed z-40 rounded-full flex items-center justify-center" style="bottom:18px; right:18px;">
+  <span class="material-symbols-outlined" style="font-size:22px;">construction</span>
+</button>
+
+<!-- ============ COMPACT DRAWER (tools) ============ -->
+<div id="toolDrawer" class="drawer-anim fixed z-40 opacity-0 pointer-events-none" style="bottom:66px; right:14px; transform:scale(0.85) translateY(10px);">
+  <div class="glass neon-border rounded-2xl p-2.5 w-64 max-h-[70vh] overflow-y-auto scrollbar-neon">
+    <div class="grid grid-cols-3 gap-2" id="toolGrid"></div>
+
+    <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,46,196,0.2);">
+      <p class="text-[10px] text-gray-400 mb-1 px-1">ҚАБАТҲО (LAYERS)</p>
+      <div id="layerList" class="flex flex-col gap-1 max-h-32 overflow-y-auto scrollbar-neon"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROPERTY PANEL (for selected element) ============ -->
+<div id="propPanel" class="drawer-anim fixed z-40 opacity-0 pointer-events-none" style="bottom:66px; left:14px; transform:scale(0.85) translateY(10px);">
+  <div class="glass neon-border-purple rounded-2xl p-3 w-64 max-h-[70vh] overflow-y-auto scrollbar-neon text-xs">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-bold text-[var(--neon-cyan)]">ХОСИЯТҲО</span>
+      <button id="closePropBtn" class="text-gray-400 text-lg leading-none">✕</button>
+    </div>
+    <div id="propBody" class="flex flex-col gap-2"></div>
+    <div class="flex gap-2 mt-3">
+      <button id="frontBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Ба боло</button>
+      <button id="backBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Ба поён</button>
+      <button id="delBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px] text-red-400">Нест кардан</button>
+    </div>
+  </div>
+</div>
+
+<input id="imgFileInput" type="file" accept="image/*" class="hidden">
+
+<script>
+/* ==================== STATE ==================== */
+let CANVAS = { w:390, h:844, bg:'#ffffff', opacity:1 };
+let elements = []; // {id,type,x,y,w,h,rotation,radius,color,opacity,content,fontFamily,fontSize,textColor,src,zIndex}
+let selectedId = null;
+let uidCounter = 1;
+
+const PRESETS = [
+  {name:'iPhone', w:390, h:844},
+  {name:'Samsung Galaxy', w:412, h:915},
+  {name:'ПК (Desktop)', w:1440, h:900},
+  {name:'Квадрат', w:500, h:500},
+];
+
+/* ==================== SETUP MODAL ==================== */
+const presetGrid = document.getElementById('presetGrid');
+PRESETS.forEach(p=>{
+  const b = document.createElement('button');
+  b.className = 'tool-btn rounded-lg py-2 px-1 text-left';
+  b.innerHTML = `<div class="font-semibold">${p.name}</div><div class="text-gray-400">${p.w}×${p.h}</div>`;
+  b.onclick = ()=>{ document.getElementById('setupW').value=p.w; document.getElementById('setupH').value=p.h; };
+  presetGrid.appendChild(b);
+});
+
+const setupColor = document.getElementById('setupColor');
+const setupColorHex = document.getElementById('setupColorHex');
+setupColor.oninput = ()=> setupColorHex.value = setupColor.value;
+setupColorHex.oninput = ()=> { if(/^#[0-9a-fA-F]{6}$/.test(setupColorHex.value)) setupColor.value = setupColorHex.value; };
+
+document.getElementById('startBtn').onclick = ()=>{
+  CANVAS.w = parseInt(document.getElementById('setupW').value)||390;
+  CANVAS.h = parseInt(document.getElementById('setupH').value)||844;
+  CANVAS.bg = setupColorHex.value || '#ffffff';
+  CANVAS.opacity = parseFloat(document.getElementById('setupOpacity').value);
+  document.getElementById('setupModal').style.display = 'none';
+  initCanvas();
+};
+
+/* ==================== CANVAS INIT ==================== */
+const canvasEl = document.getElementById('canvas');
+const canvasInfo = document.getElementById('canvasInfo');
+
+function initCanvas(){
+  canvasEl.style.width = CANVAS.w+'px';
+  canvasEl.style.height = CANVAS.h+'px';
+  canvasEl.style.background = hexToRgba(CANVAS.bg, CANVAS.opacity);
+  canvasInfo.textContent = CANVAS.w+' × '+CANVAS.h+'px';
+}
+
+function hexToRgba(hex, alpha){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const r = parseInt(hex.substring(0,2),16)||0;
+  const g = parseInt(hex.substring(2,4),16)||0;
+  const b = parseInt(hex.substring(4,6),16)||0;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* ==================== FAB & DRAWER ==================== */
+const fabBtn = document.getElementById('fabBtn');
+const toolDrawer = document.getElementById('toolDrawer');
+const propPanel = document.getElementById('propPanel');
+let drawerOpen = false;
+
+function toggleDrawer(){
+  drawerOpen = !drawerOpen;
+  setPanelState(toolDrawer, drawerOpen);
+  if(drawerOpen) setPanelState(propPanel,false);
+}
+function setPanelState(panel, open){
+  if(open){
+    panel.classList.remove('opacity-0','pointer-events-none');
+    panel.style.transform = 'scale(1) translateY(0)';
+  } else {
+    panel.classList.add('opacity-0','pointer-events-none');
+    panel.style.transform = 'scale(0.85) translateY(10px)';
+  }
+}
+fabBtn.onclick = toggleDrawer;
+
+/* ==================== TOOLS DEFINITION ==================== */
+const TOOLS = [
+  { icon:'crop_square', label:'Чоркунҷа', hint:'Иловаи шакли росткунҷа', action:()=>addShape('rect') },
+  { icon:'circle', label:'Доира', hint:'Иловаи шакли даврашакл', action:()=>addShape('circle') },
+  { icon:'rounded_corner', label:'Гирдкунҷа', hint:'Росткунҷаи кунҷҳояш гирд', action:()=>addShape('rounded') },
+  { icon:'title', label:'Матн', hint:'Иловаи навиштаҷот бо шрифт', action:()=>addText() },
+  { icon:'emoji_symbols', label:'Иконка', hint:'Иконкаи Google Material', action:()=>addIcon() },
+  { icon:'mood', label:'Эмодҷи', hint:'Эмодҷии векторӣ (калон мешавад)', action:()=>addEmoji() },
+  { icon:'image', label:'Акс', hint:'Боркунии акс аз галерея', action:()=>document.getElementById('imgFileInput').click() },
+  { icon:'water_drop', label:'Об-Овэрлей', hint:'Қабати шаффофи обӣ дар боло', action:()=>addWaterOverlay() },
+  { icon:'palette', label:'Ранги замина', hint:'Иваз кардани ранги варақ', action:()=>editCanvasBg() },
+  { icon:'aspect_ratio', label:'Андозаи варақ', hint:'Тағйири Ширина/Баландии варақ', action:()=>editCanvasSize() },
+];
+
+const toolGrid = document.getElementById('toolGrid');
+TOOLS.forEach(t=>{
+  const b = document.createElement('button');
+  b.className = 'tool-btn rounded-xl p-2 flex flex-col items-center text-center';
+  b.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px; color:var(--neon-cyan);">${t.icon}</span>
+                 <span class="text-[10px] mt-0.5 font-medium">${t.label}</span>
+                 <span class="tool-hint">${t.hint}</span>`;
+  b.onclick = t.action;
+  toolGrid.appendChild(b);
+});
+
+/* ==================== ELEMENT FACTORY ==================== */
+function baseElement(type, overrides={}){
+  const el = Object.assign({
+    id: 'el'+(uidCounter++),
+    type,
+    x: CANVAS.w/2 - 60,
+    y: CANVAS.h/2 - 60,
+    w: 120, h: 120,
+    radius: 0,
+    color: '#ff2ec4',
+    opacity: 1,
+    textColor:'#ffffff',
+    content:'',
+    fontFamily:'Inter',
+    fontSize:24,
+    zIndex: elements.length,
+  }, overrides);
+  elements.push(el);
+  renderElement(el);
+  selectElement(el.id);
+  return el;
+}
+
+function addShape(kind){
+  if(kind==='rect') baseElement('rect', {radius:0});
+  if(kind==='circle') baseElement('circle', {radius:9999, w:110, h:110});
+  if(kind==='rounded') baseElement('rect', {radius:20});
+}
+function addText(){
+  baseElement('text', {w:180, h:50, content:'Матни ту', textColor:'#ffffff', fontSize:22, color:'transparent'});
+}
+function addIcon(){
+  const name = prompt('Номи иконкаи Google Material Icons (масалан: favorite, star, home):','favorite');
+  if(!name) return;
+  baseElement('icon', {w:64,h:64, content:name.trim(), textColor:'#2ef8ff', color:'transparent', fontSize:48});
+}
+function addEmoji(){
+  const em = prompt('Эмодҷиро гузоред (масалан 🔥 ⭐ 💜):','🔥');
+  if(!em) return;
+  baseElement('emoji', {w:70,h:70, content:em, color:'transparent', fontSize:52});
+}
+function addWaterOverlay(){
+  baseElement('water', {w:180,h:220, color:'#2ef8ff', opacity:0.22});
+}
+function handleImageUpload(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    baseElement('image', {w:150,h:150, content:e.target.result, color:'transparent'});
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById('imgFileInput').onchange = e=>{
+  if(e.target.files[0]) handleImageUpload(e.target.files[0]);
+  e.target.value='';
+};
+
+/* ==================== RENDER ELEMENT (DOM) ==================== */
+function renderElement(el){
+  let node = document.getElementById(el.id);
+  if(!node){
+    node = document.createElement('div');
+    node.id = el.id;
+    node.className = 'el-node';
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    node.appendChild(handle);
+    attachDrag(node, el);
+    attachResize(handle, el, node);
+    canvasEl.appendChild(node);
+  }
+  node.style.left = el.x+'px';
+  node.style.top = el.y+'px';
+  node.style.width = el.w+'px';
+  node.style.height = el.h+'px';
+  node.style.zIndex = el.zIndex;
+  node.style.borderRadius = el.type==='circle' ? '50%' : (el.radius||0)+'px';
+  node.style.opacity = 1; // opacity applied to inner fill, not whole node (so borders/handles stay crisp)
+
+  // clear content except handle
+  Array.from(node.children).forEach(c=>{ if(!c.classList.contains('resize-handle')) c.remove(); });
+
+  if(el.type==='rect' || el.type==='circle'){
+    node.style.background = hexToRgba(el.color, el.opacity);
+  } else if(el.type==='water'){
+    node.style.background = `linear-gradient(180deg, ${hexToRgba(el.color, el.opacity)}, ${hexToRgba('#8b2eff', el.opacity*0.6)})`;
+    node.style.backdropFilter = 'blur(0px)';
+    node.style.border = '1px solid rgba(46,248,255,0.4)';
+  } else if(el.type==='text'){
+    node.style.background = 'transparent';
+    const span = document.createElement('span');
+    span.textContent = el.content;
+    span.style.color = el.textColor;
+    span.style.fontFamily = el.fontFamily;
+    span.style.fontSize = el.fontSize+'px';
+    span.style.fontWeight = '700';
+    span.style.width='100%';
+    span.style.textAlign='center';
+    span.style.pointerEvents='none';
+    node.appendChild(span);
+  } else if(el.type==='icon'){
+    node.style.background='transparent';
+    const span = document.createElement('span');
+    span.className='material-symbols-outlined';
+    span.textContent = el.content;
+    span.style.color = el.textColor;
+    span.style.fontSize = el.fontSize+'px';
+    span.style.pointerEvents='none';
+    node.appendChild(span);
+  } else if(el.type==='emoji'){
+    node.style.background='transparent';
+    const span = document.createElement('span');
+    span.textContent = el.content;
+    span.style.fontSize = el.fontSize+'px';
+    span.style.lineHeight='1';
+    span.style.pointerEvents='none';
+    node.appendChild(span);
+  } else if(el.type==='image'){
+    const img = document.createElement('img');
+    img.src = el.content;
+    img.style.width='100%';
+    img.style.height='100%';
+    img.style.objectFit='cover';
+    img.style.borderRadius = (el.radius||0)+'px';
+    img.style.pointerEvents='none';
+    img.draggable=false;
+    node.appendChild(img);
+  }
+
+  // re-append handle last so it's on top
+  const h = node.querySelector('.resize-handle');
+  if(h) node.appendChild(h);
+
+  if(el.id===selectedId) node.classList.add('selected'); else node.classList.remove('selected');
+}
+
+function renderAll(){ elements.forEach(renderElement); renderLayerList(); }
+
+/* ==================== DRAG / RESIZE ==================== */
+function attachDrag(node, el){
+  let startX=0, startY=0, origX=0, origY=0, dragging=false;
+  node.addEventListener('pointerdown', e=>{
+    if(e.target.classList.contains('resize-handle')) return;
+    e.stopPropagation();
+    dragging = true;
+    node.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+    origX = el.x; origY = el.y;
+    selectElement(el.id);
+  });
+  node.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx = e.clientX-startX, dy = e.clientY-startY;
+    el.x = origX+dx; el.y = origY+dy;
+    node.style.left = el.x+'px'; node.style.top = el.y+'px';
+  });
+  node.addEventListener('pointerup', e=>{ dragging=false; });
+  node.addEventListener('pointercancel', ()=>{ dragging=false; });
+}
+function attachResize(handle, el, node){
+  let startX=0,startY=0,origW=0,origH=0,resizing=false;
+  handle.addEventListener('pointerdown', e=>{
+    e.stopPropagation();
+    resizing=true;
+    handle.setPointerCapture(e.pointerId);
+    startX=e.clientX; startY=e.clientY;
+    origW=el.w; origH=el.h;
+  });
+  handle.addEventListener('pointermove', e=>{
+    if(!resizing) return;
+    const dx = e.clientX-startX, dy=e.clientY-startY;
+    el.w = Math.max(20, origW+dx);
+    el.h = Math.max(20, origH+dy);
+    node.style.width=el.w+'px'; node.style.height=el.h+'px';
+    if(el.id===selectedId) refreshPropPanel();
+  });
+  handle.addEventListener('pointerup', ()=>{ resizing=false; });
+  handle.addEventListener('pointercancel', ()=>{ resizing=false; });
+}
+
+/* ==================== SELECTION & PROPERTY PANEL ==================== */
+function selectElement(id){
+  selectedId = id;
+  elements.forEach(e=>{
+    const n = document.getElementById(e.id);
+    if(n) n.classList.toggle('selected', e.id===id);
+  });
+  setPanelState(propPanel, true);
+  setPanelState(toolDrawer, false);
+  drawerOpen = false;
+  refreshPropPanel();
+  renderLayerList();
+}
+canvasEl.addEventListener('pointerdown', e=>{
+  if(e.target===canvasEl){ selectedId=null; setPanelState(propPanel,false); renderLayerList(); }
+});
+
+document.getElementById('closePropBtn').onclick = ()=>{ setPanelState(propPanel,false); selectedId=null; renderLayerList(); };
+
+function getSelected(){ return elements.find(e=>e.id===selectedId); }
+
+function refreshPropPanel(){
+  const el = getSelected();
+  const body = document.getElementById('propBody');
+  body.innerHTML='';
+  if(!el){ body.innerHTML = '<p class="text-gray-500">Ягон элемент интихоб нашудааст</p>'; return; }
+
+  function row(labelText, inputHtml){
+    const d = document.createElement('div');
+    d.innerHTML = `<label class="text-[10px] text-gray-400 block mb-0.5">${labelText}</label>${inputHtml}`;
+    return d;
+  }
+
+  if(el.type!=='image'){
+    const colorRow = row('Ранг (HEX)', `<div class="flex items-center gap-2">
+        <input type="color" id="propColor" value="${el.type==='text'||el.type==='icon'||el.type==='emoji' ? el.textColor : el.color}">
+        <input type="text" id="propColorHex" value="${el.type==='text'||el.type==='icon'||el.type==='emoji' ? el.textColor : el.color}" class="flex-1 bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] font-mono outline-none">
+      </div>`);
+    body.appendChild(colorRow);
+  }
+
+  if(el.type==='rect'||el.type==='circle'||el.type==='water'){
+    body.appendChild(row('Шаффофият (Opacity)', `<input type="range" id="propOpacity" min="0" max="1" step="0.01" value="${el.opacity}" class="w-full">`));
+  }
+  if(el.type==='rect'||el.type==='image'){
+    body.appendChild(row('Радиуси кунҷ (Radius)', `<input type="range" id="propRadius" min="0" max="100" value="${el.radius||0}" class="w-full">`));
+  }
+  if(el.type==='text'){
+    body.appendChild(row('Матн', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
+    body.appendChild(row('Шрифт', `<select id="propFont" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">
+        ${['Inter','Roboto','Poppins','JetBrains Mono'].map(f=>`<option value="${f}" ${el.fontFamily===f?'selected':''}>${f}</option>`).join('')}
+      </select>`));
+    body.appendChild(row('Андозаи ҳарф', `<input type="range" id="propFontSize" min="8" max="120" value="${el.fontSize}" class="w-full">`));
+  }
+  if(el.type==='icon'){
+    body.appendChild(row('Номи иконка', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
+    body.appendChild(row('Андоза', `<input type="range" id="propFontSize" min="12" max="160" value="${el.fontSize}" class="w-full">`));
+  }
+  if(el.type==='emoji'){
+    body.appendChild(row('Эмодҷи', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
+    body.appendChild(row('Андоза', `<input type="range" id="propFontSize" min="12" max="200" value="${el.fontSize}" class="w-full">`));
+  }
+  body.appendChild(row('Гардиш (Rotation °)', `<input type="range" id="propRotation" min="0" max="360" value="${el.rotation||0}" class="w-full">`));
+
+  // bind events
+  const pc = document.getElementById('propColor');
+  const pch = document.getElementById('propColorHex');
+  if(pc){
+    pc.oninput = ()=>{ pch.value=pc.value; applyProp(el,'color',pc.value); };
+    pch.oninput = ()=>{ if(/^#[0-9a-fA-F]{6}$/.test(pch.value)){ pc.value=pch.value; applyProp(el,'color',pch.value);} };
+  }
+  const po = document.getElementById('propOpacity');
+  if(po) po.oninput = ()=> applyProp(el,'opacity',parseFloat(po.value));
+  const pr = document.getElementById('propRadius');
+  if(pr) pr.oninput = ()=> applyProp(el,'radius',parseInt(pr.value));
+  const pcontent = document.getElementById('propContent');
+  if(pcontent) pcontent.oninput = ()=> applyProp(el,'content',pcontent.value);
+  const pfont = document.getElementById('propFont');
+  if(pfont) pfont.onchange = ()=> applyProp(el,'fontFamily',pfont.value);
+  const pfs = document.getElementById('propFontSize');
+  if(pfs) pfs.oninput = ()=> applyProp(el,'fontSize',parseInt(pfs.value));
+  const prot = document.getElementById('propRotation');
+  if(prot) prot.oninput = ()=>{ el.rotation=parseInt(prot.value); const n=document.getElementById(el.id); n.style.transform=`rotate(${el.rotation}deg)`; };
+}
+
+function applyProp(el, key, value){
+  if(key==='color' && (el.type==='text'||el.type==='icon'||el.type==='emoji')){ el.textColor = value; }
+  else el[key] = value;
+  renderElement(el);
+  selectElement(el.id); // keep selection ring
+}
+
+/* ==================== LAYERS LIST ==================== */
+function renderLayerList(){
+  const list = document.getElementById('layerList');
+  list.innerHTML='';
+  const sorted = [...elements].sort((a,b)=>b.zIndex-a.zIndex);
+  sorted.forEach(el=>{
+    const row = document.createElement('div');
+    row.className = 'layer-row rounded-lg px-2 py-1 flex items-center justify-between text-[10px]'+(el.id===selectedId?' active':'');
+    row.innerHTML = `<span class="truncate flex-1">${iconFor(el.type)} ${labelFor(el)}</span>`;
+    row.onclick = ()=> selectElement(el.id);
+    list.appendChild(row);
+  });
+  if(sorted.length===0) list.innerHTML = '<p class="text-gray-500 text-[10px] px-1">Ҳанӯз элементе нест</p>';
+}
+function iconFor(type){
+  return {rect:'▭',circle:'◯',text:'T',icon:'★',emoji:'😊',image:'🖼',water:'💧'}[type]||'•';
+}
+function labelFor(el){
+  if(el.type==='text') return el.content.slice(0,14)||'Матн';
+  if(el.type==='icon') return el.content;
+  if(el.type==='emoji') return el.content;
+  return {rect:'Чоркунҷа', circle:'Доира', image:'Акс', water:'Об-Овэрлей'}[el.type]||el.type;
+}
+
+/* ==================== TOP ACTIONS: front/back/delete ==================== */
+document.getElementById('frontBtn').onclick = ()=>{
+  const el = getSelected(); if(!el) return;
+  const maxZ = Math.max(...elements.map(e=>e.zIndex), 0);
+  el.zIndex = maxZ+1;
+  renderElement(el); renderLayerList();
+};
+document.getElementById('backBtn').onclick = ()=>{
+  const el = getSelected(); if(!el) return;
+  const minZ = Math.min(...elements.map(e=>e.zIndex), 0);
+  el.zIndex = minZ-1;
+  renderElement(el); renderLayerList();
+};
+document.getElementById('delBtn').onclick = ()=>{
+  const el = getSelected(); if(!el) return;
+  const node = document.getElementById(el.id);
+  if(node) node.remove();
+  elements = elements.filter(e=>e.id!==el.id);
+  selectedId = null;
+  setPanelState(propPanel,false);
+  renderLayerList();
+};
+
+/* ==================== CANVAS BG / SIZE EDIT (post-setup) ==================== */
+function editCanvasBg(){
+  const hex = prompt('Ранги нави заминаи варақ (HEX):', CANVAS.bg);
+  if(!hex) return;
+  const op = prompt('Шаффофият аз 0 то 1:', CANVAS.opacity);
+  CANVAS.bg = hex;
+  CANVAS.opacity = op!==null ? Math.min(1,Math.max(0,parseFloat(op))) : CANVAS.opacity;
+  initCanvas();
+}
+function editCanvasSize(){
+  const w = prompt('Ширинаи нав (px):', CANVAS.w);
+  const h = prompt('Баландии нав (px):', CANVAS.h);
+  if(w) CANVAS.w = parseInt(w)||CANVAS.w;
+  if(h) CANVAS.h = parseInt(h)||CANVAS.h;
+  initCanvas();
+}
+</script>
+</body>
+</html>
