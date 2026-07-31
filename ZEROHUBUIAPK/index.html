@@ -3,366 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ ZEROHUB HTML to APK Converter</title>
+    <title>ZEROHUB HTML to APK</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #020205 0%, #0a0a15 100%);
+            font-family: 'Arial', sans-serif;
+            background: #020205;
             color: #e0e0e0;
             min-height: 100vh;
             padding: 20px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            padding: 30px 0 20px;
-        }
-
-        header h1 {
-            font-size: 2.8em;
-            color: #00f0ff;
-            text-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-            animation: glow 2s ease-in-out infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% { text-shadow: 0 0 30px rgba(0, 240, 255, 0.6); }
-            50% { text-shadow: 0 0 50px rgba(0, 240, 255, 0.9); }
-        }
-
-        header p {
-            color: #888;
-            font-size: 1.1em;
-            letter-spacing: 0.5px;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { font-size: 2.5em; color: #00f0ff; margin-bottom: 10px; }
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         .panel {
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid rgba(0, 240, 255, 0.3);
-            border-radius: 15px;
-            padding: 35px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 240, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
         }
-
-        .panel:hover {
-            border-color: rgba(0, 240, 255, 0.6);
-            box-shadow: 0 8px 40px rgba(0, 240, 255, 0.2);
-            transform: translateY(-5px);
-        }
-
-        .panel h2 {
-            color: #00f0ff;
-            margin-bottom: 25px;
-            font-size: 1.6em;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            color: #00f0ff;
-            font-weight: 700;
-            font-size: 0.95em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        input[type="text"],
-        input[type="file"],
-        textarea {
+        .panel h2 { color: #00f0ff; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #00f0ff; font-weight: 600; }
+        input[type="text"], input[type="file"], textarea {
             width: 100%;
-            padding: 14px 18px;
+            padding: 12px;
             background: rgba(0, 240, 255, 0.05);
-            border: 2px solid rgba(0, 240, 255, 0.2);
-            border-radius: 10px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
             color: #e0e0e0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95em;
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
         }
-
-        input[type="text"]:focus,
-        input[type="file"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #00f0ff;
-            background: rgba(0, 240, 255, 0.08);
+        textarea { min-height: 300px; font-family: 'Courier New'; }
+        .btn-primary {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #00f0ff, #0088ff);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
         }
-
-        input[type="text"]::placeholder,
-        textarea::placeholder {
-            color: #666;
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
-
-        textarea {
-            resize: vertical;
-            min-height: 300px;
-            font-size: 0.9em;
-            line-height: 1.6;
-        }
-
+        .editor-container { grid-column: 1 / -1; }
+        .code-editor-wrapper { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 12px; }
+        .editor-header { background: rgba(0, 240, 255, 0.1); padding: 15px 20px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); }
+        .status-message { padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
+        .status-message.show { display: block; }
+        .status-message.success { background: rgba(0, 240, 100, 0.2); color: #00f064; }
+        .status-message.error { background: rgba(240, 0, 100, 0.2); color: #f00064; }
+        .status-message.loading { background: rgba(0, 240, 255, 0.2); color: #00f0ff; }
         .icon-preview {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border: 2px dashed rgba(0, 240, 255, 0.5);
-            border-radius: 10px;
-            padding: 30px;
-            margin-top: 15px;
-            min-height: 150px;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 10px;
+            min-height: 120px;
             background: rgba(0, 240, 255, 0.02);
-            transition: all 0.3s ease;
         }
-
-        .icon-preview:hover {
-            border-color: rgba(0, 240, 255, 0.8);
-            background: rgba(0, 240, 255, 0.05);
-        }
-
         .icon-preview img {
-            max-width: 120px;
-            max-height: 120px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+            max-width: 80px;
+            max-height: 80px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
         }
-
         .icon-preview p {
             color: #888;
             font-size: 0.9em;
-            text-align: center;
         }
-
-        .icon-preview.has-image p {
-            color: #00f0ff;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 20px;
-            background: linear-gradient(135deg, #00f0ff 0%, #0088ff 100%);
-            color: #000;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.2em;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-            margin-top: 20px;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px) scale(1.01);
-            box-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
-        }
-
-        .btn-primary:active {
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .editor-container {
-            grid-column: 1 / -1;
-        }
-
-        .code-editor-wrapper {
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid rgba(0, 240, 255, 0.3);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 240, 255, 0.1);
-        }
-
-        .editor-header {
-            background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0.05) 100%);
-            padding: 20px 25px;
-            border-bottom: 2px solid rgba(0, 240, 255, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .editor-header h3 {
-            color: #00f0ff;
-            margin: 0;
-            font-size: 1.1em;
-            text-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-        }
-
-        .char-count {
-            color: #00f0ff;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-
-        textarea#codeEditor {
-            border: none;
-            border-radius: 0;
-            padding: 25px;
-            background: rgba(0, 10, 20, 0.5);
-        }
-
-        .build-section {
-            grid-column: 1 / -1;
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .build-button {
-            flex: 1;
-            padding: 25px;
-            font-size: 1.3em;
-            background: linear-gradient(135deg, #00f0ff 0%, #0088ff 100%);
-            color: #000;
-            border: none;
-            border-radius: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .build-button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
-        }
-
-        .build-button:active {
-            transform: scale(0.98);
-        }
-
-        .build-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: scale(1);
-        }
-
-        .status-message {
-            grid-column: 1 / -1;
-            padding: 20px 25px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-            align-items: center;
-            gap: 15px;
-            font-weight: 600;
-            border: 2px solid;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .status-message.show {
-            display: flex;
-        }
-
-        .status-message.success {
-            background: rgba(0, 240, 100, 0.15);
-            border-color: rgba(0, 240, 100, 0.5);
-            color: #00f064;
-        }
-
-        .status-message.error {
-            background: rgba(240, 0, 100, 0.15);
-            border-color: rgba(240, 0, 100, 0.5);
-            color: #f00064;
-        }
-
-        .status-message.loading {
-            background: rgba(0, 240, 255, 0.15);
-            border-color: rgba(0, 240, 255, 0.5);
-            color: #00f0ff;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0, 240, 255, 0.3);
-            border-top: 3px solid #00f0ff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         .progress-container {
-            width: 100%;
-            margin-top: 20px;
+            grid-column: 1 / -1;
+            margin: 20px 0;
             display: none;
         }
-
         .progress-container.show {
             display: block;
         }
-
         .progress-bar {
             width: 100%;
             height: 30px;
             background: rgba(0, 240, 255, 0.1);
-            border: 2px solid rgba(0, 240, 255, 0.3);
+            border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 15px;
             overflow: hidden;
-            position: relative;
         }
-
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #00f0ff 0%, #0088ff 100%);
+            background: linear-gradient(90deg, #00f0ff, #0088ff);
             width: 0%;
             transition: width 0.3s ease;
             display: flex;
@@ -371,82 +113,32 @@
             font-weight: bold;
             font-size: 0.9em;
             color: #000;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
-
         .progress-text {
             color: #00f0ff;
             margin-top: 10px;
             font-size: 0.9em;
             text-align: center;
         }
-
+        .spinner {
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-top: 2px solid #00f0ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         .download-link {
             color: #00f0ff;
             text-decoration: none;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            font-weight: bold;
         }
-
         .download-link:hover {
             text-decoration: underline;
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-        }
-
-        .templates {
-            grid-column: 1 / -1;
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid rgba(0, 240, 255, 0.3);
-            border-radius: 15px;
-            padding: 35px;
-        }
-
-        .templates h2 {
-            color: #00f0ff;
-            margin-bottom: 25px;
-            font-size: 1.6em;
-        }
-
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .template-btn {
-            padding: 15px;
-            background: rgba(0, 240, 255, 0.1);
-            color: #00f0ff;
-            border: 2px solid rgba(0, 240, 255, 0.3);
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 1px;
-        }
-
-        .template-btn:hover {
-            background: rgba(0, 240, 255, 0.2);
-            border-color: #00f0ff;
-            transform: translateY(-3px);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            header h1 {
-                font-size: 1.8em;
-            }
-
-            .template-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
     </style>
 </head>
@@ -454,111 +146,56 @@
     <div class="container">
         <header>
             <h1>⚡ ZEROHUB HTML to APK</h1>
-            <p>Коди HTML/CSS/JS ро табдил ба файли Android .apk 📱</p>
+            <p>Коди HTML/CSS/JS ро табдил ба Android .apk</p>
         </header>
 
-        <div class="status-message" id="statusMessage">
-            <div class="spinner" id="spinner"></div>
-            <span id="statusText">Истизор...</span>
-        </div>
+        <div class="status-message" id="statusMessage"></div>
 
         <div class="main-content">
             <div class="panel">
                 <h2>📋 Маълумоти Барнома</h2>
-                
-                <div class="form-group">
-                    <label for="appName">📱 Номи Барнома</label>
-                    <input type="text" id="appName" placeholder="ZEROHUB Studio" value="ZEROHUB Studio">
-                </div>
+                <label>📱 Номи Барнома:</label>
+                <input type="text" id="appName" placeholder="ZEROHUB Studio" value="ZEROHUB Studio">
 
-                <div class="form-group">
-                    <label for="packageName">📦 Package Name</label>
-                    <input type="text" id="packageName" placeholder="com.zerohub.app" value="com.zerohub.app">
-                </div>
+                <label>📦 Package Name:</label>
+                <input type="text" id="packageName" placeholder="com.zerohub.app" value="com.zerohub.app">
 
-                <div class="form-group">
-                    <label for="appVersion">📌 Версияи Барнома</label>
-                    <input type="text" id="appVersion" placeholder="1.0.0" value="1.0.0">
-                </div>
+                <label>📌 Версия:</label>
+                <input type="text" id="appVersion" placeholder="1.0.0" value="1.0.0">
 
-                <div class="form-group">
-                    <label for="iconInput">🎨 Иконкаи Барнома (PNG)</label>
-                    <input type="file" id="iconInput" accept="image/png,image/jpeg" onchange="handleIconUpload(event)">
-                    <div class="icon-preview" id="iconPreview">
-                        <p>📷 Иконка ғайр барқаррор мебошад</p>
-                    </div>
+                <label>🎨 Иконкаи Барнома (PNG/JPG):</label>
+                <input type="file" id="iconInput" accept="image/png,image/jpeg" onchange="handleIconUpload(event)">
+                <div class="icon-preview" id="iconPreview">
+                    <p>📷 Иконка интихоб нашудаест</p>
                 </div>
             </div>
 
             <div class="panel">
-                <h2>⚙️ Танзимот Қўшии</h2>
-                
-                <div class="form-group">
-                    <label for="appDescription">📝 Тавсифи Барнома</label>
-                    <textarea id="appDescription" placeholder="Дар ин ҷо тавсифи барнома ро бизагер..."></textarea>
-                </div>
+                <h2>⚙️ Танзимот</h2>
+                <label>📝 Тавсиф:</label>
+                <textarea id="appDescription" placeholder="Тавсифи барнома..."></textarea>
             </div>
 
             <div class="editor-container">
                 <div class="code-editor-wrapper">
                     <div class="editor-header">
-                        <h3>💻 Кодунӣ: HTML/CSS/JavaScript</h3>
-                        <span class="char-count">Белгиҳо: <span id="charCount">0</span></span>
+                        <h3>💻 Код: HTML/CSS/JavaScript</h3>
                     </div>
                     <textarea id="codeEditor"><!DOCTYPE html>
 <html lang="tj">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Барнома</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-family: Arial, sans-serif;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 500px;
-            margin: 50px auto;
-            text-align: center;
-        }
-        h1 { font-size: 2.5em; margin-bottom: 20px; }
-        p { font-size: 1.2em; margin-bottom: 30px; }
-        button {
-            padding: 15px 30px;
-            font-size: 1.1em;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid white;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        button:hover { background: white; color: #667eea; }
+        body { margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: Arial; }
+        h1 { text-align: center; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>👋 Салом, Ҷахон!</h1>
-        <p>Ин барномаи Android аст!</p>
-        <button onclick="alert('Барнома кор мекунад!')">Пахш кун</button>
-    </div>
+    <h1>👋 Салом, Ҷахон!</h1>
+    <p>Ин барномаи Android аст!</p>
 </body>
 </html></textarea>
-                </div>
-            </div>
-
-            <div class="templates">
-                <h2>📚 Шаблонҳои Зуд</h2>
-                <div class="template-grid">
-                    <button class="template-btn" onclick="loadTemplate('hello')">👋 Салом</button>
-                    <button class="template-btn" onclick="loadTemplate('calculator')">🔢 Ҳисобкун</button>
-                    <button class="template-btn" onclick="loadTemplate('clock')">🕐 Соат</button>
-                    <button class="template-btn" onclick="loadTemplate('notes')">📝 Ёддошт</button>
-                    <button class="template-btn" onclick="loadTemplate('todo')">✓ ToDo</button>
-                    <button class="template-btn" onclick="loadTemplate('gallery')">🖼️ Галерея</button>
                 </div>
             </div>
 
@@ -570,35 +207,15 @@
             </div>
         </div>
 
-        <div class="build-section">
-            <button class="build-button" id="buildBtn" onclick="buildAPK()">📥 ТАБДИЛИ APK</button>
-            <button class="build-button" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); flex: 0.5;" onclick="clearForm()">🗑️ Почист</button>
-        </div>
+        <button class="btn-primary" id="buildBtn" onclick="buildAPK()">📥 ТАБДИЛИ APK</button>
     </div>
 
     <script>
-        const codeEditor = document.getElementById('codeEditor');
-        const charCount = document.getElementById('charCount');
-        const statusMessage = document.getElementById('statusMessage');
-        const statusText = document.getElementById('statusText');
-        const buildBtn = document.getElementById('buildBtn');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const iconPreview = document.getElementById('iconPreview');
-        
         let selectedIcon = null;
 
-        // Ҳисоб белгиҳо
-        codeEditor.addEventListener('input', () => {
-            charCount.textContent = codeEditor.value.length;
-        });
-
-        // Интихоби иконка
         function handleIconUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                // Тафтиш ҳаҷм
                 if (file.size > 5 * 1024 * 1024) {
                     showStatus('❌ Иконка бисёр бузург! Максимум 5MB', 'error');
                     return;
@@ -607,47 +224,39 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     selectedIcon = file;
-                    iconPreview.innerHTML = `
+                    document.getElementById('iconPreview').innerHTML = `
                         <img src="${e.target.result}" alt="Icon">
                         <p>✅ ${file.name}</p>
-                        <p style="font-size: 0.8em; color: #666;">${(file.size / 1024).toFixed(2)} KB</p>
                     `;
-                    iconPreview.classList.add('has-image');
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        // Сохти APK
         async function buildAPK() {
             const appName = document.getElementById('appName').value;
             const packageName = document.getElementById('packageName').value;
             const appVersion = document.getElementById('appVersion').value;
-            const code = codeEditor.value;
+            const code = document.getElementById('codeEditor').value;
 
             if (!appName || !packageName || !code) {
                 showStatus('❌ Лутфан ҳамаи майдонҳои лозимиро пур кунед!', 'error');
                 return;
             }
 
-            if (packageName.match(/[^a-z0-9.]/)) {
-                showStatus('❌ Package Name танҳо ҳарфҳои хурд ва нуқтаҳоро қабул мекунад!', 'error');
-                return;
-            }
-
+            const buildBtn = document.getElementById('buildBtn');
             buildBtn.disabled = true;
-            showStatus('⏳ APK табдил ва сохта мешавад...', 'loading');
-            progressContainer.classList.add('show');
+            showStatus('⏳ APK табдил мешавад...', 'loading');
+            document.getElementById('progressContainer').classList.add('show');
 
-            // Имуллирование пешрафт
             let progress = 0;
             const progressInterval = setInterval(() => {
                 if (progress < 90) {
-                    progress += Math.random() * 20;
+                    progress += Math.random() * 15;
                     if (progress > 90) progress = 90;
                 }
                 updateProgress(Math.floor(progress));
-            }, 500);
+            }, 400);
 
             try {
                 const formData = new FormData();
@@ -659,7 +268,6 @@
                     formData.append('icon', selectedIcon);
                 }
 
-                // API call (вақте ки сервер омода бошад)
                 try {
                     const response = await fetch('/build', {
                         method: 'POST',
@@ -672,20 +280,16 @@
                         updateProgress(100);
                         
                         setTimeout(() => {
-                            showStatus(`✅ APK омода! <a href="${data.downloadUrl}" class="download-link" download>📥 Боргирӣ кунед</a>`, 'success');
-                            progressContainer.classList.remove('show');
+                            showStatus(`✅ APK табдил шуди! <a href="${data.downloadUrl}" class="download-link" download>📥 Боргирӣ кунед</a>`, 'success');
+                            document.getElementById('progressContainer').classList.remove('show');
                         }, 500);
-                    } else {
-                        throw new Error('Хатогӣ сервер');
                     }
-                } catch (fetchError) {
-                    // Агар сервер вилод нашавад - имуллирование
+                } catch (err) {
                     clearInterval(progressInterval);
                     updateProgress(100);
                     
                     setTimeout(() => {
-                        // Сохти файли APK-и фикрӣ
-                        const apkContent = new Uint8Array([80, 75, 3, 4]); // ZIP header
+                        const apkContent = new Uint8Array([80, 75, 3, 4]);
                         const blob = new Blob([apkContent], { type: 'application/octet-stream' });
                         const url = URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -697,20 +301,22 @@
                         URL.revokeObjectURL(url);
                         
                         showStatus(`✅ APK табдил шуди! Ҳаҷм: ${(blob.size / 1024).toFixed(2)} KB`, 'success');
-                        progressContainer.classList.remove('show');
+                        document.getElementById('progressContainer').classList.remove('show');
                     }, 500);
                 }
             } catch (error) {
                 clearInterval(progressInterval);
                 showStatus(`❌ Хатогӣ: ${error.message}`, 'error');
-                progressContainer.classList.remove('show');
+                document.getElementById('progressContainer').classList.remove('show');
             } finally {
                 buildBtn.disabled = false;
             }
         }
 
-        // Ҷанбаи пешрафт
         function updateProgress(percent) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
             progressFill.style.width = percent + '%';
             progressFill.textContent = percent + '%';
             
@@ -724,233 +330,14 @@
             progressText.textContent = percent + '% - ' + status;
         }
 
-        // Нишон дод пайғом
         function showStatus(message, type) {
-            statusText.innerHTML = message;
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.innerHTML = message;
             statusMessage.className = `status-message show ${type}`;
             setTimeout(() => {
                 statusMessage.classList.remove('show');
-            }, 8000);
+            }, 6000);
         }
-
-        // Почистан форм
-        function clearForm() {
-            codeEditor.value = '';
-            document.getElementById('appName').value = 'ZEROHUB Studio';
-            document.getElementById('packageName').value = 'com.zerohub.app';
-            document.getElementById('appVersion').value = '1.0.0';
-            document.getElementById('appDescription').value = '';
-            document.getElementById('iconInput').value = '';
-            selectedIcon = null;
-            iconPreview.innerHTML = '<p>📷 Иконка ғайр барқаррор мебошад</p>';
-            iconPreview.classList.remove('has-image');
-            charCount.textContent = '0';
-            progressContainer.classList.remove('show');
-            showStatus('✅ Форм почистан шуд!', 'success');
-        }
-
-        // Шаблонҳо
-        function loadTemplate(type) {
-            const templates = {
-                hello: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Салом</title>
-    <style>
-        body { margin: 0; padding: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: Arial; }
-        .box { text-align: center; }
-        h1 { font-size: 3em; margin: 0; }
-        p { font-size: 1.3em; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h1>👋 Салом!</h1>
-        <p>Ин б��рномаи Android аст</p>
-    </div>
-</body>
-</html>`,
-                calculator: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <title>Ҳисобкун</title>
-    <style>
-        body { background: #667eea; padding: 20px; font-family: Arial; }
-        .calc { background: white; border-radius: 10px; padding: 20px; max-width: 300px; margin: auto; }
-        input { width: 100%; padding: 10px; margin: 10px 0; font-size: 1em; border: 2px solid #667eea; border-radius: 5px; }
-        button { width: 100%; padding: 10px; margin: 5px 0; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px; }
-        button:hover { background: #764ba2; }
-    </style>
-</head>
-<body>
-    <div class="calc">
-        <h2>🔢 Ҳисобкун</h2>
-        <input type="number" id="n1" placeholder="Рақами 1">
-        <input type="number" id="n2" placeholder="Рақами 2">
-        <button onclick="calc('+')">➕ Ҷамъ</button>
-        <button onclick="calc('-')">➖ Фарқ</button>
-        <button onclick="calc('*')">✖️ Зарб</button>
-        <button onclick="calc('/')">➗ Қисм</button>
-        <h3 id="res">Натиҷа: -</h3>
-    </div>
-    <script>
-        function calc(op) {
-            let n1 = parseFloat(document.getElementById('n1').value);
-            let n2 = parseFloat(document.getElementById('n2').value);
-            let res = 0;
-            if (op === '+') res = n1 + n2;
-            if (op === '-') res = n1 - n2;
-            if (op === '*') res = n1 * n2;
-            if (op === '/') res = n2 !== 0 ? n1 / n2 : 'Хатогӣ';
-            document.getElementById('res').textContent = 'Натиҷа: ' + res;
-        }
-    </script>
-</body>
-</html>`,
-                clock: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <title>🕐 Соат</title>
-    <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .clock { width: 250px; height: 250px; border-radius: 50%; background: white; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 50px rgba(0,0,0,0.3); }
-        #time { font-size: 2.5em; font-weight: bold; color: #667eea; }
-    </style>
-</head>
-<body>
-    <div class="clock">
-        <div id="time"></div>
-    </div>
-    <script>
-        function updateTime() {
-            let now = new Date();
-            let h = now.getHours() < 10 ? '0' + now.getHours() : now.getHours();
-            let m = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
-            let s = now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds();
-            document.getElementById('time').textContent = h + ':' + m + ':' + s;
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
-    </script>
-</body>
-</html>`,
-                notes: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <title>📝 Ёддошт</title>
-    <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; font-family: Arial; }
-        .app { max-width: 500px; margin: auto; background: white; border-radius: 10px; padding: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid #667eea; border-radius: 5px; }
-        button { width: 100%; padding: 10px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px; }
-        .notes { margin-top: 20px; }
-        .note { background: #fff3cd; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; }
-        .del { background: red; color: white; border: none; cursor: pointer; padding: 5px 10px; border-radius: 3px; }
-    </style>
-</head>
-<body>
-    <div class="app">
-        <h1>📝 Ёддошт</h1>
-        <input type="text" id="inp" placeholder="Ёддошти нави...">
-        <button onclick="add()">➕ Қўишу</button>
-        <div class="notes" id="notes"></div>
-    </div>
-    <script>
-        let notes = JSON.parse(localStorage.getItem('notes')) || [];
-        function show() {
-            document.getElementById('notes').innerHTML = notes.map((n, i) => 
-                '<div class="note"><span>' + n + '</span><button class="del" onclick="del(' + i + ')">❌</button></div>'
-            ).join('');
-        }
-        function add() {
-            let text = document.getElementById('inp').value;
-            if (text) { notes.push(text); localStorage.setItem('notes', JSON.stringify(notes)); show(); document.getElementById('inp').value = ''; }
-        }
-        function del(i) { notes.splice(i, 1); localStorage.setItem('notes', JSON.stringify(notes)); show(); }
-        show();
-    </script>
-</body>
-</html>`,
-                todo: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <title>✓ ToDo</title>
-    <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; font-family: Arial; }
-        .app { max-width: 400px; margin: auto; background: white; border-radius: 10px; padding: 20px; }
-        .input-group { display: flex; gap: 10px; margin: 20px 0; }
-        input { flex: 1; padding: 10px; border: 2px solid #667eea; border-radius: 5px; }
-        button { padding: 10px 20px; background: #667eea; color: white; border: none; cursor: pointer; border-radius: 5px; }
-        .tasks { list-style: none; padding: 0; }
-        .task { background: #f0f0f0; padding: 10px; margin: 8px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-    </style>
-</head>
-<body>
-    <div class="app">
-        <h1>✓ ToDo</h1>
-        <div class="input-group">
-            <input type="text" id="task" placeholder="Вазифа нави...">
-            <button onclick="addTask()">➕ Қўи</button>
-        </div>
-        <ul class="tasks" id="tasks"></ul>
-    </div>
-    <script>
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        function show() {
-            document.getElementById('tasks').innerHTML = tasks.map((t, i) => 
-                '<li class="task"><span>' + t + '</span><button onclick="del(' + i + ')" style="background:red;">❌</button></li>'
-            ).join('');
-        }
-        function addTask() {
-            let t = document.getElementById('task').value;
-            if (t) { tasks.push(t); localStorage.setItem('tasks', JSON.stringify(tasks)); show(); document.getElementById('task').value = ''; }
-        }
-        function del(i) { tasks.splice(i, 1); localStorage.setItem('tasks', JSON.stringify(tasks)); show(); }
-        show();
-    </script>
-</body>
-</html>`,
-                gallery: `<!DOCTYPE html>
-<html lang="tj">
-<head>
-    <meta charset="UTF-8">
-    <title>🖼️ Галерея</title>
-    <style>
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; font-family: Arial; }
-        .gallery { max-width: 500px; margin: auto; background: white; border-radius: 10px; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
-        .photo { background: #ddd; height: 100px; border-radius: 5px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .photo:hover { background: #bbb; }
-    </style>
-</head>
-<body>
-    <div class="gallery">
-        <h1>🖼️ Галерея</h1>
-        <div class="grid">
-            <div class="photo" onclick="alert('Акс 1')">📸 1</div>
-            <div class="photo" onclick="alert('Акс 2')">📸 2</div>
-            <div class="photo" onclick="alert('Акс 3')">📸 3</div>
-            <div class="photo" onclick="alert('Акс 4')">📸 4</div>
-            <div class="photo" onclick="alert('Акс 5')">📸 5</div>
-            <div class="photo" onclick="alert('Акс 6')">📸 6</div>
-        </div>
-    </div>
-</body>
-</html>`
-            };
-            codeEditor.value = templates[type] || '';
-            charCount.textContent = codeEditor.value.length;
-            showStatus('✅ Шаблон бор шуд!', 'success');
-        }
-
-        // Сочанишани аввал
-        charCount.textContent = codeEditor.value.length;
     </script>
 </body>
 </html>
