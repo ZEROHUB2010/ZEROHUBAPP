@@ -156,8 +156,6 @@
 <div class="fixed top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-30 pointer-events-none">
   <div class="flex items-center gap-3 pointer-events-auto">
     <span class="text-[11px] font-bold neon-text" style="font-family:'Poppins',sans-serif;">ZEROHUB <span class="text-[var(--neon-cyan)]">PRO</span></span>
-    <!-- Save button -->
-    <button id="saveBtn" class="tool-btn rounded-lg px-3 py-1 text-[12px] font-medium pointer-events-auto">САБТ КАРДАН</button>
   </div>
   <span id="canvasInfo" class="text-[10px] text-gray-400 pointer-events-auto"></span>
 </div>
@@ -165,6 +163,11 @@
 <!-- ============ COMPACT DRAWER (tools) ============ -->
 <button id="fabBtn" class="fab-btn fixed z-40 rounded-full flex items-center justify-center" style="bottom:18px; right:18px;">
   <span class="material-symbols-outlined" style="font-size:22px;">construction</span>
+</button>
+
+<!-- ============ HAMBURGER MENU (тарафи чап - лоиҳаҳои пешина) ============ -->
+<button id="menuBtn" class="fab-btn fixed z-40 rounded-full flex items-center justify-center" style="bottom:18px; left:18px;">
+  <span class="material-symbols-outlined" style="font-size:22px;">menu</span>
 </button>
 
 <div id="toolDrawer" class="drawer-anim fixed z-40 opacity-0 pointer-events-none" style="bottom:66px; right:14px; transform:scale(0.85) translateY(10px);">
@@ -194,12 +197,15 @@
   </div>
 </div>
 
-<!-- ============ SAVE SIDEBAR (hidden initially) ============ -->
-<div id="saveSidebar" class="save-sidebar fixed z-50 top-16 left-4 w-72 max-h-[80vh] overflow-auto glass neon-border rounded-2xl p-3 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon">
-  <div class="flex items-center justify-between mb-2">
-    <span class="font-bold text-[var(--neon-cyan)]">ЗАХИРАҲО</span>
-    <button id="closeSaveSidebar" class="text-gray-400">✕</button>
+<!-- ============ SAVE SIDEBAR: half-screen menu (лоиҳаҳои пешина) ============ -->
+<div id="saveSidebar" class="save-sidebar fixed z-50 top-0 left-0 h-full overflow-auto glass neon-border p-3 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon" style="width:50vw; max-width:340px;">
+  <div class="flex items-center justify-between mb-3">
+    <span class="font-bold text-[var(--neon-cyan)] text-sm">ЛОИҲАҲОИ ПЕШИНА</span>
+    <button id="closeSaveSidebar" class="text-gray-400 text-lg leading-none">✕</button>
   </div>
+  <button id="addSaveBtn" class="tool-btn w-full rounded-lg py-2 text-[12px] font-medium mb-3 flex items-center justify-center gap-1">
+    <span class="material-symbols-outlined" style="font-size:16px;">add</span> Сабти лоиҳаи ҷорӣ
+  </button>
   <div id="savesList" class="flex flex-col gap-2"></div>
 </div>
 
@@ -273,7 +279,7 @@ let drawerOpen = false;
 function toggleDrawer(){
   drawerOpen = !drawerOpen;
   setPanelState(toolDrawer, drawerOpen);
-  if(drawerOpen) setPanelState(propPanel,false);
+  if(drawerOpen){ setPanelState(propPanel,false); if(menuOpen){ menuOpen=false; setSidebarState(false);} }
 }
 function setPanelState(panel, open){
   if(open){
@@ -296,6 +302,17 @@ function setSidebarState(open){
   }
 }
 fabBtn.onclick = toggleDrawer;
+
+let menuOpen = false;
+function toggleSaveSidebar(){
+  menuOpen = !menuOpen;
+  setSidebarState(menuOpen);
+  if(menuOpen){
+    setPanelState(toolDrawer,false); drawerOpen=false;
+    setPanelState(propPanel,false);
+  }
+}
+document.getElementById('menuBtn').onclick = toggleSaveSidebar;
 
 /* ==================== TOOLS DEFINITION ==================== */
 const TOOLS = [
@@ -511,6 +528,7 @@ function selectElement(id){
   setPanelState(propPanel, true);
   setPanelState(toolDrawer, false);
   drawerOpen = false;
+  if(menuOpen){ menuOpen=false; setSidebarState(false); }
   refreshPropPanel();
   renderLayerList();
 }
@@ -687,101 +705,88 @@ function editCanvasSize(){
   initCanvas();
 }
 
-/* ==================== SAVE / LOAD (localStorage) ==================== */
+/* ==================== SAVE / LOAD (persistent window.storage, on-device across sessions) ==================== */
 const SAVE_KEY = 'zerohub_saves_v1';
-function loadSavesFromStorage(){
+async function loadSavesFromStorage(){
   try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const res = await window.storage.get(SAVE_KEY, false);
+    return res && res.value ? JSON.parse(res.value) : [];
   }catch(e){ return []; }
 }
-function saveSavesToStorage(list){
-  localStorage.setItem(SAVE_KEY, JSON.stringify(list));
+async function saveSavesToStorage(list){
+  try{
+    await window.storage.set(SAVE_KEY, JSON.stringify(list), false);
+  }catch(e){ console.error('Хатогии захиракунӣ:', e); alert('Хатогӣ ҳангоми захира кардан рӯй дод.'); }
 }
-function saveCurrentState(name){
-  const list = loadSavesFromStorage();
+async function saveCurrentState(name){
+  const list = await loadSavesFromStorage();
   const snapshot = {
     name: name || ('project-'+(new Date()).toISOString()),
     date: (new Date()).toISOString(),
     data: { CANVAS, elements }
   };
   list.unshift(snapshot); // newest first
-  saveSavesToStorage(list);
-  renderSavesList();
+  await saveSavesToStorage(list);
+  await renderSavesList();
 }
-function renderSavesList(){
-  const list = loadSavesFromStorage();
+async function renderSavesList(){
+  const list = await loadSavesFromStorage();
   const container = document.getElementById('savesList');
   container.innerHTML = '';
-  if(list.length===0){ container.innerHTML = '<p class="text-gray-400 text-[12px]">Ҳеҷ захирае вуҷуд надорад</p>'; return; }
+  if(list.length===0){ container.innerHTML = '<p class="text-gray-400 text-[12px]">Ҳеҷ лоиҳаи пешина вуҷуд надорад</p>'; return; }
   list.forEach((s, idx)=>{
     const it = document.createElement('div');
-    it.className = 'bg-black/30 border border-purple-600 rounded-lg p-2 flex items-center justify-between';
-    it.innerHTML = `<div class="flex flex-col">
-        <strong class="text-[13px]">${s.name}</strong>
-        <span class="text-[11px] text-gray-400">${new Date(s.date).toLocaleString()}</span>
+    it.className = 'layer-row rounded-lg px-2 py-2 flex items-center justify-between cursor-pointer';
+    it.innerHTML = `<div class="flex flex-col flex-1 min-w-0" data-idx="${idx}" data-action="load">
+        <strong class="text-[12px] truncate">${s.name}</strong>
+        <span class="text-[10px] text-gray-400">${new Date(s.date).toLocaleString()}</span>
       </div>
-      <div class="flex gap-1">
-        <button class="tool-btn px-2 py-1 text-[11px]" data-idx="${idx}" data-action="load">Бор кардан</button>
-        <button class="tool-btn px-2 py-1 text-[11px]" data-idx="${idx}" data-action="download">Зеркашӣ</button>
-      </div>`;
+      <button class="text-red-400 px-2" data-idx="${idx}" data-action="delete">
+        <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+      </button>`;
     container.appendChild(it);
-    it.querySelectorAll('button').forEach(b=>{
-      b.addEventListener('click', (ev)=>{
-        const i = parseInt(b.getAttribute('data-idx'));
-        const a = b.getAttribute('data-action');
-        if(a==='load') loadSave(i);
-        if(a==='download') downloadSave(i);
-      });
-    });
+    it.querySelector('[data-action="load"]').addEventListener('click', ()=> loadSave(idx));
+    it.querySelector('[data-action="delete"]').addEventListener('click', (ev)=>{ ev.stopPropagation(); deleteSave(idx); });
   });
 }
-function loadSave(index){
-  const list = loadSavesFromStorage();
-  if(!list[index]) return alert('Захира ёфта нашуд');
+async function loadSave(index){
+  const list = await loadSavesFromStorage();
+  if(!list[index]) return alert('Лоиҳа ёфта нашуд');
   const snap = list[index];
-  // set CANVAS and elements
   CANVAS = JSON.parse(JSON.stringify(snap.data.CANVAS));
   elements = JSON.parse(JSON.stringify(snap.data.elements || []));
-  // clear canvas DOM
   canvasEl.innerHTML = '';
-  // ensure uidCounter unique (find max numeric suffix)
   let maxId = 0;
   elements.forEach(e=>{
     const m = (e.id||'').match(/el(\d+)$/);
     if(m) maxId = Math.max(maxId, parseInt(m[1]));
   });
   uidCounter = maxId+1;
+  selectedId = null;
+  setPanelState(propPanel,false);
   renderAll();
   initCanvas();
+  menuOpen = false;
   setSidebarState(false);
-  alert('Захира бор шуд: '+snap.name);
 }
-function downloadSave(index){
-  const list = loadSavesFromStorage();
+async function deleteSave(index){
+  const list = await loadSavesFromStorage();
   if(!list[index]) return;
-  const data = JSON.stringify(list[index].data, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (list[index].name||'zerohub')+'.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  if(!confirm('Лоиҳаи "'+list[index].name+'" нест карда шавад?')) return;
+  list.splice(index,1);
+  await saveSavesToStorage(list);
+  await renderSavesList();
 }
 
 /* ==================== SAVE BUTTON HOOKS ==================== */
-document.getElementById('saveBtn').onclick = ()=>{
-  const name = prompt('Номи файлро ворид кунед (масалан: my_project):','my_design');
+document.getElementById('addSaveBtn').onclick = async ()=>{
+  const name = prompt('Номи лоиҳаро ворид кунед (масалан: my_project):','my_design');
   if(!name) return;
-  saveCurrentState(name);
-  setSidebarState(true); // open sidebar to show saved items
+  await saveCurrentState(name);
 };
-document.getElementById('closeSaveSidebar').onclick = ()=> setSidebarState(false);
+document.getElementById('closeSaveSidebar').onclick = ()=>{ menuOpen=false; setSidebarState(false); };
 
-// on load: render saves list so opening later shows existing saves
+// on load: render saves list so opening the panel later shows existing projects
 renderSavesList();
 
 /* ==================== small helpers for keyboard issue: already handled in refreshPropPanel ==================== */
