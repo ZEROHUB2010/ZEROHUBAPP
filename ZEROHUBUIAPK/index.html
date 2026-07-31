@@ -1,0 +1,115 @@
+name=ZEROHUBUIAPK/index.html
+<!DOCTYPE html>
+<html lang="tj">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZEROHUB HTML to APK</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #020205;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { font-size: 2.5em; color: #00f0ff; margin-bottom: 10px; }
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+        }
+        .panel h2 { color: #00f0ff; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #00f0ff; font-weight: 600; }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+        textarea { min-height: 300px; font-family: 'Courier New'; }
+        .btn-primary {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #00f0ff, #0088ff);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .editor-container { grid-column: 1 / -1; }
+        .code-editor-wrapper { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 12px; }
+        .editor-header { background: rgba(0, 240, 255, 0.1); padding: 15px 20px; border-bottom: 1px solid rgba(0, 240, 255, 0.2); }
+        .status-message { padding: 15px; margin-bottom: 20px; border-radius: 8px; display: none; }
+        .status-message.show { display: block; }
+        .status-message.success { background: rgba(0, 240, 100, 0.2); color: #00f064; }
+        .status-message.error { background: rgba(240, 0, 100, 0.2); color: #f00064; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ ZEROHUB HTML to APK</h1>
+            <p>Коди HTML/CSS/JS ро табдил ба Android .apk</p>
+        </header>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2>📋 Маълумоти Барнома</h2>
+                <label>📱 Номи Барнома:</label>
+                <input type="text" id="appName" placeholder="ZEROHUB Studio" value="ZEROHUB Studio">
+
+                <label>📦 Package Name:</label>
+                <input type="text" id="packageName" placeholder="com.zerohub.app" value="com.zerohub.app">
+
+                <label>📌 Версия:</label>
+                <input type="text" id="appVersion" placeholder="1.0.0" value="1.0.0">
+            </div>
+
+            <div class="panel">
+                <h2>⚙️ Танзимот</h2>
+                <label>📝 Тавсиф:</label>
+                <textarea id="appDescription" placeholder="Тавсифи барнома..."></textarea>
+            </div>
+
+            <div class="editor-container">
+                <div class="code-editor-wrapper">
+                    <div class="editor-header">
+                        <h3>💻 Код: HTML/CSS/JavaScript</h3>
+                    </div>
+                    <textarea id="codeEditor"><!DOCTYPE html>
+<html lang="tj">
+<head>
+    <meta charset="UTF-8">
+    <title>Барнома</title>
+    <style>
+        body { margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: Arial; }
+        h1 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>👋 Салом, Ҷахон!</h1>
+    <p>Ин барномаи Android аст!</p>
+</body>
+</html></textarea>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="alert('APK сохта мешавад...')">📥 СОХТИ ФАЙЛИ .APK</button>
+    </div>
+</body>
+</html>
