@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ZEROHUB Studio Mobile Pro</title>
+<title>ZEROHBUI Studio Pro - MultiScreen</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto:wght@400;500;700&family=Poppins:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 <style>
   :root{
@@ -25,7 +25,6 @@
     height:100%;
     margin:0;
   }
-  /* CRITICAL: 0px blur enforced everywhere - no glassmorphism blur */
   .glass{
     background: rgba(20,20,28,0.85);
     backdrop-filter: blur(0px) !important;
@@ -63,6 +62,25 @@
     outline:2px solid var(--neon-cyan);
     box-shadow:0 0 10px rgba(46,248,255,0.7);
   }
+  .el-node.pinned{
+    outline:2px dashed #ffd12e;
+  }
+  .pin-badge{
+    position:absolute;
+    top:-8px;
+    left:-8px;
+    width:18px;height:18px;
+    background:#ffd12e;
+    color:#000;
+    border-radius:50%;
+    font-size:10px;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 0 6px rgba(255,209,46,0.8);
+    z-index:10000;
+  }
+  .el-node.pinned .pin-badge{ display:flex; }
   .resize-handle{
     position:absolute;
     right:-8px;
@@ -77,6 +95,38 @@
     display:none;
   }
   .el-node.selected .resize-handle{ display:block; }
+
+  /* OVERLAY QUICK EDIT CONTROLS */
+  .quick-controls {
+    position: absolute;
+    top: -34px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 4px;
+    background: rgba(10,10,15,0.95);
+    border: 1px solid var(--neon-cyan);
+    padding: 2px 6px;
+    border-radius: 8px;
+    z-index: 9999;
+    box-shadow: 0 0 10px rgba(46,248,255,0.5);
+    white-space: nowrap;
+  }
+  .el-node.selected .quick-controls { display: flex; }
+  .qc-btn {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .qc-btn:hover { background: var(--neon-pink); }
+  .qc-btn.pin-active{ background:#ffd12e; color:#000; }
 
   .fab-btn{
     width:40px;height:40px;
@@ -104,19 +154,67 @@
   .drawer-anim{ transition: transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease; }
   .layer-row{ background:rgba(255,255,255,0.03); border:1px solid rgba(139,46,255,0.25); }
   .layer-row.active{ border-color:var(--neon-cyan); box-shadow:0 0 6px rgba(46,248,255,0.5); }
+  .save-sidebar{ transition: transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease; }
 
-  /* Save sidebar (left) */
-  .save-sidebar{
-    transition: transform .22s cubic-bezier(.2,.9,.3,1.2), opacity .18s ease;
+  .screen-tab{
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,46,196,0.3);
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .screen-tab.active{
+    background: var(--neon-pink);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(255,46,196,0.8);
+  }
+
+  /* Dropdown Menu for 3 Dots */
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 25px;
+    background: #121218;
+    border: 1px solid var(--neon-pink);
+    border-radius: 8px;
+    z-index: 100;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+  }
+  .dropdown-menu.show { display: block; }
+  .dropdown-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #eee;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover { background: rgba(255,46,196,0.2); }
+
+  /* Neon Glow Effects */
+  .glow-text-cyan { text-shadow: 0 0 8px rgba(46,248,255,0.6); }
+  .glow-border-pink { box-shadow: 0 0 12px rgba(255,46,196,0.4); }
+
+  /* Modal Enhancements */
+  .modal-overlay {
+    background: rgba(5,5,7,0.95);
+    backdrop-filter: blur(8px);
   }
 </style>
 </head>
 <body class="h-full w-full">
 
-<!-- ============ SETUP MODAL: интихоби андоза ва ранги замина ============ -->
 <div id="setupModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
   <div class="glass neon-border rounded-2xl w-full max-w-sm p-5 scrollbar-neon overflow-y-auto max-h-[90vh]">
-    <h1 class="text-xl font-black neon-text mb-1" style="font-family:'Poppins',sans-serif;">ZEROHUB STUDIO <span class="text-[var(--neon-cyan)]">MOBILE PRO</span></h1>
+    <h1 class="text-xl font-black neon-text mb-1" style="font-family:'Poppins',sans-serif;">ZEROHBUI STUDIO <span class="text-[var(--neon-cyan)]">PRO</span></h1>
     <p class="text-xs text-gray-400 mb-4">Танзими варақи кориро интихоб намоед</p>
 
     <label class="text-xs text-gray-300 block mb-1">Андозаи экран (Preset)</label>
@@ -147,25 +245,23 @@
   </div>
 </div>
 
-<!-- ============ MAIN STAGE ============ -->
 <div id="canvasStage" class="fixed inset-0 flex items-center justify-center overflow-auto scrollbar-neon">
   <div id="canvas"></div>
 </div>
 
-<!-- top bar: file name + save button -->
-<div class="fixed top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-30 pointer-events-none">
-  <div class="flex items-center gap-3 pointer-events-auto">
-    <span class="text-[11px] font-bold neon-text" style="font-family:'Poppins',sans-serif;">ZEROHUB <span class="text-[var(--neon-cyan)]">PRO</span></span>
+<div class="fixed top-0 left-0 right-0 flex flex-col px-3 py-2 z-30 pointer-events-none gap-2 bg-black/40 backdrop-blur-sm">
+  <div class="flex items-center justify-between w-full pointer-events-auto">
+    <span class="text-[11px] font-bold neon-text" style="font-family:'Poppins',sans-serif;">ZEROHBUI <span class="text-[var(--neon-cyan)]">PRO</span></span>
+    <span id="canvasInfo" class="text-[10px] text-gray-400"></span>
   </div>
-  <span id="canvasInfo" class="text-[10px] text-gray-400 pointer-events-auto"></span>
+
+  <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-neon pointer-events-auto pb-1" id="screensBar"></div>
 </div>
 
-<!-- ============ COMPACT DRAWER (tools) ============ -->
 <button id="fabBtn" class="fab-btn fixed z-40 rounded-full flex items-center justify-center" style="bottom:18px; right:18px;">
   <span class="material-symbols-outlined" style="font-size:22px;">construction</span>
 </button>
 
-<!-- ============ HAMBURGER MENU (тарафи чап - лоиҳаҳои пешина) ============ -->
 <button id="menuBtn" class="fab-btn fixed z-40 rounded-full flex items-center justify-center" style="bottom:18px; left:18px;">
   <span class="material-symbols-outlined" style="font-size:22px;">menu</span>
 </button>
@@ -173,7 +269,6 @@
 <div id="toolDrawer" class="drawer-anim fixed z-40 opacity-0 pointer-events-none" style="bottom:66px; right:14px; transform:scale(0.85) translateY(10px);">
   <div class="glass neon-border rounded-2xl p-2.5 w-64 max-h-[70vh] overflow-y-auto scrollbar-neon">
     <div class="grid grid-cols-3 gap-2" id="toolGrid"></div>
-
     <div class="mt-2 pt-2" style="border-top:1px solid rgba(255,46,196,0.2);">
       <p class="text-[10px] text-gray-400 mb-1 px-1">ҚАБАТҲО (LAYERS)</p>
       <div id="layerList" class="flex flex-col gap-1 max-h-32 overflow-y-auto scrollbar-neon"></div>
@@ -181,42 +276,123 @@
   </div>
 </div>
 
-<!-- ============ PROPERTY PANEL (for selected element) ============ -->
 <div id="propPanel" class="drawer-anim fixed z-40 opacity-0 pointer-events-none" style="bottom:66px; left:14px; transform:scale(0.85) translateY(10px);">
   <div class="glass neon-border-purple rounded-2xl p-3 w-64 max-h-[70vh] overflow-y-auto scrollbar-neon text-xs">
     <div class="flex items-center justify-between mb-2">
-      <span class="font-bold text-[var(--neon-cyan)]">ХОСИЯТҲО</span>
+      <span class="font-bold text-[var(--neon-cyan)]">ХОСИЯТҲО ВА АМАЛ</span>
       <button id="closePropBtn" class="text-gray-400 text-lg leading-none">✕</button>
     </div>
     <div id="propBody" class="flex flex-col gap-2"></div>
     <div class="flex gap-2 mt-3">
-      <button id="frontBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Ба боло</button>
-      <button id="backBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Ба поён</button>
-      <button id="delBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px] text-red-400">Нест кардан</button>
+      <button id="pinBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px] text-yellow-300">📌 Собит</button>
+      <button id="frontBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Боло</button>
+      <button id="backBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px]">Поён</button>
+      <button id="delBtn" class="tool-btn flex-1 rounded-lg py-2 text-[10px] text-red-400">Тоза</button>
     </div>
   </div>
 </div>
 
-<!-- ============ SAVE SIDEBAR: half-screen menu (лоиҳаҳои пешина) ============ -->
-<div id="saveSidebar" class="save-sidebar fixed z-50 top-0 left-0 h-full overflow-auto glass neon-border p-3 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon" style="width:50vw; max-width:340px;">
+<div id="saveSidebar" class="save-sidebar fixed z-50 top-0 left-0 h-full overflow-auto glass neon-border p-3 transform -translate-x-full opacity-0 pointer-events-none scrollbar-neon" style="width:75vw; max-width:340px;">
   <div class="flex items-center justify-between mb-3">
-    <span class="font-bold text-[var(--neon-cyan)] text-sm">ЛОИҲАҲОИ ПЕШИНА</span>
+    <span class="font-bold text-[var(--neon-cyan)] text-sm">ZEROHBUI ЛОИҲАҲО</span>
     <button id="closeSaveSidebar" class="text-gray-400 text-lg leading-none">✕</button>
   </div>
-  <button id="addSaveBtn" class="tool-btn w-full rounded-lg py-2 text-[12px] font-medium mb-3 flex items-center justify-center gap-1">
-    <span class="material-symbols-outlined" style="font-size:16px;">add</span> Сабти лоиҳаи ҷорӣ
+
+  <button id="addSaveBtn" class="tool-btn w-full rounded-lg py-2 text-[11px] font-medium mb-2 flex items-center justify-center gap-1">
+    <span class="material-symbols-outlined" style="font-size:16px;">save</span> Сабти лоиҳа дар хотира
   </button>
+
+  <div class="grid grid-cols-2 gap-1.5 mb-3">
+    <button id="exportImageBtn" class="tool-btn rounded-lg py-2 text-[10px] text-[var(--neon-cyan)] font-medium flex items-center justify-center gap-1">
+      <span class="material-symbols-outlined" style="font-size:14px;">image</span> Сабти Акс
+    </button>
+    <button id="exportJsonBtn" class="tool-btn rounded-lg py-2 text-[10px] text-pink-400 font-medium flex items-center justify-center gap-1">
+      <span class="material-symbols-outlined" style="font-size:14px;">download</span> JSON Файл
+    </button>
+  </div>
+
+  <button id="apkBuildBtn" class="w-full py-2 rounded-lg text-[11px] font-bold mb-3 flex items-center justify-center gap-1 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] bg-cyan-950/30">
+    <span class="material-symbols-outlined" style="font-size:16px;">android</span> ТАБДИЛ ДИҲӢ БА APK
+  </button>
+
   <div id="savesList" class="flex flex-col gap-2"></div>
+</div>
+
+<div id="codeModal" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay p-4 hidden">
+  <div class="glass neon-border rounded-2xl w-full max-w-2xl p-4 flex flex-col h-[85vh]">
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-sm font-bold text-[var(--neon-cyan)] glow-text-cyan">Генерацияи коди тозаи HTML/CSS/JS</h3>
+      <button id="closeCodeModal" class="text-gray-400 text-lg hover:text-white transition-colors">✕</button>
+    </div>
+    <p class="text-[10px] text-gray-400 mb-2">Коди зер пурра коркунанда аст. Ҳамаи экранҳо, элементҳо, унсурҳои собит (📌) ва фармонҳо нигоҳ дошта шудаанд.</p>
+    <textarea id="codeTextarea" class="w-full flex-1 bg-black/90 font-mono text-[11px] text-green-400 p-3 rounded-lg border border-gray-700 outline-none resize-none scrollbar-neon leading-relaxed"></textarea>
+    <div class="flex gap-2 mt-3">
+      <button id="copyCodeBtn" class="flex-1 tool-btn py-2 rounded-lg text-xs font-bold text-cyan-300 hover:bg-cyan-900/30 transition-colors">Нусхабардории код</button>
+      <button id="downloadCodeBtn" class="flex-1 tool-btn py-2 rounded-lg text-xs font-bold text-pink-300 hover:bg-pink-900/30 transition-colors">Боргирӣ (.html)</button>
+    </div>
+  </div>
 </div>
 
 <input id="imgFileInput" type="file" accept="image/*" class="hidden">
 
 <script>
-/* ==================== STATE ==================== */
+/* ============================================================================
+   ⚠️ SECURITY NOTE (муҳим): GROQ_API_KEY дар зер рост дар коди JavaScript-и
+   браузер сабт шудааст. Ҳар касе, ки ин файлро кушояд (ё View Source кунад),
+   метавонад ин калидро бинад ва аз квотаи шумо истифода барад. Барои лоиҳаи
+   шахсӣ/озмоишӣ ин қобили қабул аст. Агар ин файлро оммавӣ паҳн кунед
+   (масалан APK), тавсия медиҳам калидро тавассути прокси-сервери худ пинҳон
+   намоед, на ин ки мустақим дар клиент нигоҳ доред.
+   ============================================================================ */
+const GROQ_API_KEY   = "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";
+const GROQ_MODEL      = "openai/gpt-oss-120b";
+const GROQ_ENDPOINT   = "https://api.groq.com/openai/v1/chat/completions";
+
+// Generic helper: calls Groq's OpenAI-compatible chat completion endpoint.
+// Returns the raw text of the model's reply (already trimmed).
+async function callGroqAI(systemPrompt, userPrompt, maxTokens){
+  const res = await fetch(GROQ_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + GROQ_API_KEY
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.2,
+      max_tokens: maxTokens || 200
+    })
+  });
+  if(!res.ok){
+    const errText = await res.text().catch(()=> '');
+    throw new Error('Groq HTTP ' + res.status + ': ' + errText);
+  }
+  const data = await res.json();
+  const text = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  return (text || '').trim();
+}
+
 let CANVAS = { w:390, h:844, bg:'#ffffff', opacity:1 };
-let elements = []; // {id,type,x,y,w,h,rotation,radius,color,opacity,content,fontFamily,fontSize,textColor,src,zIndex}
+
+let screens = {
+  "Screen 1": []
+};
+let activeScreen = "Screen 1";
 let selectedId = null;
 let uidCounter = 1;
+
+// Instant offline cache for very common emoji — avoids an AI call for the obvious ones.
+// Anything NOT in this list is resolved live by Groq (addEmojiVector), so ALL emoji work.
+const EMOJI_MAP = {
+  '🔥': 'local_fire_department', '⭐': 'star', '📜': 'description', '❤️': 'favorite',
+  '🏠': 'home', '🚀': 'rocket_launch', '⚙️': 'settings', '🔍': 'search',
+  '👤': 'person', '🔔': 'notifications', '✉️': 'mail', '📞': 'call',
+  '🛒': 'shopping_cart', '📷': 'photo_camera', '🔒': 'lock', '💡': 'lightbulb'
+};
 
 const PRESETS = [
   {name:'iPhone', w:390, h:844},
@@ -225,12 +401,11 @@ const PRESETS = [
   {name:'Квадрат', w:500, h:500},
 ];
 
-/* ==================== SETUP MODAL ==================== */
 const presetGrid = document.getElementById('presetGrid');
 PRESETS.forEach(p=>{
   const b = document.createElement('button');
-  b.className = 'tool-btn rounded-lg py-2 px-1 text-left';
-  b.innerHTML = `<div class="font-semibold">${p.name}</div><div class="text-gray-400">${p.w}×${p.h}</div>`;
+  b.className = 'tool-btn rounded-lg py-2 px-1 text-left hover:bg-pink-900/20 transition-colors';
+  b.innerHTML = `<div class="font-semibold text-cyan-300">${p.name}</div><div class="text-gray-400">${p.w}×${p.h}</div>`;
   b.onclick = ()=>{ document.getElementById('setupW').value=p.w; document.getElementById('setupH').value=p.h; };
   presetGrid.appendChild(b);
 });
@@ -247,9 +422,9 @@ document.getElementById('startBtn').onclick = ()=>{
   CANVAS.opacity = parseFloat(document.getElementById('setupOpacity').value);
   document.getElementById('setupModal').style.display = 'none';
   initCanvas();
+  renderScreensBar();
 };
 
-/* ==================== CANVAS INIT ==================== */
 const canvasEl = document.getElementById('canvas');
 const canvasInfo = document.getElementById('canvasInfo');
 
@@ -261,7 +436,7 @@ function initCanvas(){
 }
 
 function hexToRgba(hex, alpha){
-  hex = hex.replace('#','');
+  hex = (hex||'#000000').replace('#','');
   if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
   const r = parseInt(hex.substring(0,2),16)||0;
   const g = parseInt(hex.substring(2,4),16)||0;
@@ -269,7 +444,42 @@ function hexToRgba(hex, alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* ==================== FAB & DRAWER ==================== */
+function renderScreensBar(){
+  const bar = document.getElementById('screensBar');
+  bar.innerHTML = '';
+  Object.keys(screens).forEach(screenName => {
+    const btn = document.createElement('button');
+    btn.className = `screen-tab ${screenName === activeScreen ? 'active' : ''}`;
+    btn.textContent = screenName;
+    btn.onclick = () => switchScreen(screenName);
+    bar.appendChild(btn);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'screen-tab border-dashed border-cyan-400 text-cyan-300 hover:bg-cyan-900/30 transition-colors';
+  addBtn.textContent = '+ Экрани нав';
+  addBtn.onclick = () => {
+    const nextNum = Object.keys(screens).length + 1;
+    const newName = `Screen ${nextNum}`;
+    screens[newName] = [];
+    switchScreen(newName);
+  };
+  bar.appendChild(addBtn);
+}
+
+// Elements with pinned:true live in a special "*" pseudo-screen list (pinnedElements)
+// and are re-rendered on top of every screen, always at the same x/y.
+let pinnedElements = [];
+
+function switchScreen(screenName){
+  activeScreen = screenName;
+  selectedId = null;
+  setPanelState(propPanel, false);
+  canvasEl.innerHTML = '';
+  renderScreensBar();
+  renderAll();
+}
+
 const fabBtn = document.getElementById('fabBtn');
 const toolDrawer = document.getElementById('toolDrawer');
 const propPanel = document.getElementById('propPanel');
@@ -304,34 +514,28 @@ function setSidebarState(open){
 fabBtn.onclick = toggleDrawer;
 
 let menuOpen = false;
-function toggleSaveSidebar(){
+document.getElementById('menuBtn').onclick = ()=>{
   menuOpen = !menuOpen;
   setSidebarState(menuOpen);
-  if(menuOpen){
-    setPanelState(toolDrawer,false); drawerOpen=false;
-    setPanelState(propPanel,false);
-  }
-}
-document.getElementById('menuBtn').onclick = toggleSaveSidebar;
+  if(menuOpen){ setPanelState(toolDrawer,false); drawerOpen=false; setPanelState(propPanel,false); }
+};
 
-/* ==================== TOOLS DEFINITION ==================== */
 const TOOLS = [
-  { icon:'crop_square', label:'Чоркунҷа', hint:'Иловаи шакли росткунҷа', action:()=>addShape('rect') },
-  { icon:'circle', label:'Доира', hint:'Иловаи шакли даврашакл', action:()=>addShape('circle') },
-  { icon:'rounded_corner', label:'Гирдкунҷа', hint:'Росткунҷаи кунҷҳояш гирд', action:()=>addShape('rounded') },
-  { icon:'title', label:'Матн', hint:'Иловаи навиштаҷот бо шрифт', action:()=>addText() },
-  { icon:'emoji_symbols', label:'Иконка', hint:'Иконкаи Google Material', action:()=>addIcon() },
-  { icon:'mood', label:'Эмодҷи', hint:'Эмодҷии векторӣ (калон мешавад)', action:()=>addEmoji() },
-  { icon:'image', label:'Акс', hint:'Боркунии акс аз галерея', action:()=>document.getElementById('imgFileInput').click() },
-  { icon:'water_drop', label:'Об-Овэрлей', hint:'Қабати шаффофи обӣ дар боло', action:()=>addWaterOverlay() },
-  { icon:'palette', label:'Ранги замина', hint:'Иваз кардани ранги варақ', action:()=>editCanvasBg() },
-  { icon:'aspect_ratio', label:'Андозаи варақ', hint:'Тағйири Ширина/Баландии варақ', action:()=>editCanvasSize() },
+  { icon:'crop_square', label:'Чоркунҷа', hint:'Шакли росткунҷа', action:()=>addShape('rect') },
+  { icon:'circle', label:'Доира', hint:'Шакли даврашакл', action:()=>addShape('circle') },
+  { icon:'rounded_corner', label:'Гирдкунҷа', hint:'Кунҷҳояш гирд', action:()=>addShape('rounded') },
+  { icon:'title', label:'Матн', hint:'Навиштаҷот', action:()=>addText() },
+  { icon:'mood', label:'Иконка Векторӣ (AI)', hint:'Ҳар эмодҷӣ → Вектор', action:()=>addEmojiVector() },
+  { icon:'image', label:'Акс', hint:'Боркунии акс', action:()=>document.getElementById('imgFileInput').click() },
+  { icon:'water_drop', label:'Об-Овэрлей', hint:'Қабати шаффоф', action:()=>addWaterOverlay() },
+  { icon:'palette', label:'Ранги замина', hint:'Ивази ранги варақ', action:()=>editCanvasBg() },
+  { icon:'aspect_ratio', label:'Андоза', hint:'Тағйири андозаи варақ', action:()=>editCanvasSize() },
 ];
 
 const toolGrid = document.getElementById('toolGrid');
 TOOLS.forEach(t=>{
   const b = document.createElement('button');
-  b.className = 'tool-btn rounded-xl p-2 flex flex-col items-center text-center';
+  b.className = 'tool-btn rounded-xl p-2 flex flex-col items-center text-center hover:bg-pink-900/20 transition-colors';
   b.innerHTML = `<span class="material-symbols-outlined" style="font-size:20px; color:var(--neon-cyan);">${t.icon}</span>
                  <span class="text-[10px] mt-0.5 font-medium">${t.label}</span>
                  <span class="tool-hint">${t.hint}</span>`;
@@ -339,8 +543,16 @@ TOOLS.forEach(t=>{
   toolGrid.appendChild(b);
 });
 
-/* ==================== ELEMENT FACTORY ==================== */
+function currentList(){
+  const el = getSelected();
+  return el ? getListOf(el) : screens[activeScreen];
+}
+function getListOf(el){
+  return el.pinned ? pinnedElements : screens[activeScreen];
+}
+
 function baseElement(type, overrides={}){
+  const currentElements = screens[activeScreen];
   const el = Object.assign({
     id: 'el'+(uidCounter++),
     type,
@@ -354,9 +566,11 @@ function baseElement(type, overrides={}){
     content:'',
     fontFamily:'Inter',
     fontSize:24,
-    zIndex: elements.length,
+    zIndex: currentElements.length,
+    pinned: false, // 📌 агар true бошад, элемент дар ҳамаи экранҳо дар ҳамон ҷо мемонад
+    smartCommand: '' // ENGLISH SMART COMMAND
   }, overrides);
-  elements.push(el);
+  currentElements.push(el);
   renderElement(el);
   selectElement(el.id);
   return el;
@@ -367,64 +581,117 @@ function addShape(kind){
   if(kind==='circle') baseElement('circle', {radius:300, w:110, h:110});
   if(kind==='rounded') baseElement('rect', {radius:20});
 }
-function addText(){
-  baseElement('text', {w:180, h:50, content:'Матни ту', textColor:'#ffffff', fontSize:22, color:'transparent'});
+function addText(){ baseElement('text', {w:180, h:50, content:'Матни ту', textColor:'#ffffff', fontSize:22, color:'transparent'}); }
+
+// ===================== AI EMOJI → VECTOR ICON (works for ANY emoji) =====================
+async function addEmojiVector(){
+  const input = prompt('Эмодҷи ё номи иконкаро гузоред (масалан 🔥, ⭐, 🚀, 🐸, 🍕... — ҳар эмодҷӣ кор мекунад):','🔥');
+  if(!input) return;
+  const trimmed = input.trim();
+
+  // 1) Instant offline cache for the most common ones — no API call, no delay.
+  if(EMOJI_MAP[trimmed]){
+    baseElement('icon', {w:64,h:64, content:EMOJI_MAP[trimmed], textColor:'#2ef8ff', color:'transparent', fontSize:48});
+    return;
+  }
+  // 2) If the user already typed a plain icon name (e.g. "home"), use it directly.
+  if(/^[a-z0-9_]+$/.test(trimmed)){
+    baseElement('icon', {w:64,h:64, content:trimmed, textColor:'#2ef8ff', color:'transparent', fontSize:48});
+    return;
+  }
+
+  // 3) Otherwise ask Groq AI to map the emoji/phrase to the correct Material Symbols name.
+  showToast('AI дар ҳоли ёфтани иконка...', 'success');
+  const el = baseElement('icon', {w:64,h:64, content:'hourglass_empty', textColor:'#2ef8ff', color:'transparent', fontSize:48});
+  try{
+    const iconName = await callGroqAI(
+      'You are an icon-mapping engine. Given an emoji or short phrase, respond with ONLY the exact Google "Material Symbols Outlined" icon name in snake_case that best represents it (e.g. local_fire_department for 🔥, pets for 🐾). No punctuation, no explanation, no markdown — just the icon name.',
+      trimmed,
+      20
+    );
+    const clean = iconName.replace(/[^a-z0-9_]/gi,'').toLowerCase() || 'help';
+    el.content = clean;
+    renderElement(el);
+    showToast('Иконка ёфт шуд: ' + clean);
+  }catch(err){
+    console.warn('AI icon lookup failed:', err);
+    el.content = 'help';
+    renderElement(el);
+    showToast('AI дастрас нашуд — иконкаи вазифавӣ гузошта шуд', 'error');
+  }
 }
-function addIcon(){
-  const name = prompt('Номи иконкаи Google Material Icons (масалан: favorite, star, home):','favorite');
-  if(!name) return;
-  baseElement('icon', {w:64,h:64, content:name.trim(), textColor:'#2ef8ff', color:'transparent', fontSize:48});
-}
-function addEmoji(){
-  const em = prompt('Эмодҷиро гузоред (масалан 🔥 ⭐ 💜):','🔥');
-  if(!em) return;
-  baseElement('emoji', {w:70,h:70, content:em, color:'transparent', fontSize:52});
-}
-function addWaterOverlay(){
-  baseElement('water', {w:180,h:220, radius:90, color:'#2ef8ff', opacity:0.22});
-}
-function handleImageUpload(file){
-  const reader = new FileReader();
-  reader.onload = e=>{
-    baseElement('image', {w:150,h:150, content:e.target.result, color:'transparent'});
-  };
-  reader.readAsDataURL(file);
-}
+
+function addWaterOverlay(){ baseElement('water', {w:180,h:220, radius:90, color:'#2ef8ff', opacity:0.22}); }
+
 document.getElementById('imgFileInput').onchange = e=>{
-  if(e.target.files[0]) handleImageUpload(e.target.files[0]);
+  if(e.target.files[0]){
+    const reader = new FileReader();
+    reader.onload = ev => baseElement('image', {w:150,h:150, content:ev.target.result, color:'transparent'});
+    reader.readAsDataURL(e.target.files[0]);
+  }
   e.target.value='';
 };
 
-/* ==================== RENDER ELEMENT (DOM) ==================== */
 function renderElement(el){
   let node = document.getElementById(el.id);
   if(!node){
     node = document.createElement('div');
     node.id = el.id;
     node.className = 'el-node';
+
+    const pinBadge = document.createElement('div');
+    pinBadge.className = 'pin-badge';
+    pinBadge.textContent = '📌';
+    node.appendChild(pinBadge);
+
+    // QUICK CONTROLS OVERLAY (Қаламча ва Тугмаи амал)
+    const qc = document.createElement('div');
+    qc.className = 'quick-controls';
+    qc.innerHTML = `
+      <button class="qc-btn qc-run" title="Иҷрои фармон"><span class="material-symbols-outlined" style="font-size:14px;">bolt</span></button>
+      <button class="qc-btn qc-edit" title="Таҳрир"><span class="material-symbols-outlined" style="font-size:14px;">edit</span></button>
+    `;
+    node.appendChild(qc);
+
+    qc.querySelector('.qc-run').onclick = (e)=>{ e.stopPropagation(); executeSmartCommand(el); };
+    qc.querySelector('.qc-edit').onclick = (e)=>{ e.stopPropagation(); selectElement(el.id); setPanelState(propPanel, true); };
+
     const handle = document.createElement('div');
     handle.className = 'resize-handle';
     node.appendChild(handle);
+
     attachDrag(node, el);
     attachResize(handle, el, node);
+
+    node.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('resize-handle') || e.target.closest('.quick-controls')) return;
+      if(el.smartCommand && el.smartCommand.trim()){
+        executeSmartCommand(el);
+      } else {
+        selectElement(el.id);
+        setPanelState(propPanel, true);
+      }
+    });
+
     canvasEl.appendChild(node);
   }
+
   node.style.left = el.x+'px';
   node.style.top = el.y+'px';
   node.style.width = el.w+'px';
   node.style.height = el.h+'px';
-  node.style.zIndex = el.zIndex;
+  node.style.zIndex = el.pinned ? 5000 + el.zIndex : el.zIndex;
   node.style.borderRadius = (el.radius||0)+'px';
-  node.style.opacity = 1; // opacity applied to inner fill, not whole node (so borders/handles stay crisp)
+  node.classList.toggle('pinned', !!el.pinned);
 
-  // clear content except handle
-  Array.from(node.children).forEach(c=>{ if(!c.classList.contains('resize-handle')) c.remove(); });
+  Array.from(node.children).forEach(c=>{
+    if(!c.classList.contains('resize-handle') && !c.classList.contains('quick-controls') && !c.classList.contains('pin-badge')) c.remove();
+  });
 
   if(el.type==='rect' || el.type==='circle'){
     node.style.background = hexToRgba(el.color, el.opacity);
   } else if(el.type==='water'){
     node.style.background = `linear-gradient(180deg, ${hexToRgba(el.color, el.opacity)}, ${hexToRgba('#8b2eff', el.opacity*0.6)})`;
-    node.style.backdropFilter = 'blur(0px)';
     node.style.border = '1px solid rgba(46,248,255,0.4)';
   } else if(el.type==='text'){
     node.style.background = 'transparent';
@@ -447,40 +714,133 @@ function renderElement(el){
     span.style.fontSize = el.fontSize+'px';
     span.style.pointerEvents='none';
     node.appendChild(span);
-  } else if(el.type==='emoji'){
-    node.style.background='transparent';
-    const span = document.createElement('span');
-    span.textContent = el.content;
-    span.style.fontSize = el.fontSize+'px';
-    span.style.lineHeight='1';
-    span.style.pointerEvents='none';
-    node.appendChild(span);
   } else if(el.type==='image'){
     const img = document.createElement('img');
     img.src = el.content;
-    img.style.width='100%';
-    img.style.height='100%';
-    img.style.objectFit='cover';
+    img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
     img.style.borderRadius = (el.radius||0)+'px';
     img.style.pointerEvents='none';
     img.draggable=false;
     node.appendChild(img);
   }
 
-  // re-append handle last so it's on top
-  const h = node.querySelector('.resize-handle');
-  if(h) node.appendChild(h);
-
-  if(el.id===selectedId) node.classList.add('selected'); else node.classList.remove('selected');
+  node.classList.toggle('selected', el.id===selectedId);
 }
 
-function renderAll(){ elements.forEach(renderElement); renderLayerList(); }
+// ===================== AI-POWERED FREEFORM ENGLISH SMART COMMANDS =====================
+// Fast static patterns are handled instantly (no API call). Anything else is sent to
+// Groq, which must reply with ONE strict JSON action object — never raw injected code —
+// so the result is predictable and safe to apply to the DOM.
+const AI_ACTION_SYSTEM_PROMPT = `You are a UI action interpreter for a mobile app builder called ZEROHBUI.
+Given a plain-English instruction describing what should happen when a UI element is tapped,
+reply with ONLY a single raw JSON object (no markdown, no code fences, no explanation) matching
+exactly one of these shapes:
+{"type":"style","css":{"backgroundColor":"#00ff00"}}   // any camelCase CSS properties to apply
+{"type":"text","content":"new text here"}                // change a text element's content
+{"type":"navigate","screen":"Screen 2"}                  // switch to another screen by name/number
+{"type":"alert","message":"Hello"}                        // show a browser alert
+{"type":"url","href":"https://example.com"}               // open a URL in a new tab
+Pick the single most fitting type for the instruction. Respond with raw JSON only, nothing else.`;
 
-/* ==================== DRAG / RESIZE ==================== */
+async function applyAIAction(action, el, node){
+  if(!action || !action.type) return;
+  switch(action.type){
+    case 'style':
+      Object.assign(node.style, action.css || {});
+      if(action.css && action.css.backgroundColor) el.color = action.css.backgroundColor;
+      if(action.css && action.css.color && ['text','icon'].includes(el.type)) el.textColor = action.css.color;
+      break;
+    case 'text':
+      if(el.type==='text'){ el.content = action.content || el.content; renderElement(el); }
+      break;
+    case 'navigate': {
+      const target = String(action.screen||'').toLowerCase();
+      const screenKey = Object.keys(screens).find(s=>{
+        const l = s.toLowerCase();
+        return l===target || l==='screen '+target || l.replace('screen ','')===target;
+      });
+      if(screenKey) switchScreen(screenKey);
+      break;
+    }
+    case 'alert':
+      alert(action.message || 'Action executed!');
+      break;
+    case 'url': {
+      let url = action.href || '';
+      if(url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      if(url) window.open(url, '_blank');
+      break;
+    }
+  }
+}
+
+async function executeSmartCommand(el){
+  if(!el.smartCommand) return;
+  const rawCmd = el.smartCommand.trim();
+  const cmd = rawCmd.toLowerCase();
+
+  // 1) Fast static patterns — instant, zero API cost.
+  if(cmd.startsWith('go to screen') || cmd.startsWith('screen') || cmd.startsWith('open screen')){
+    const target = cmd.replace(/go to screen|screen|open screen/g, '').trim();
+    const screenKey = Object.keys(screens).find(s => {
+      const l = s.toLowerCase();
+      return l === target || l === 'screen ' + target || l.replace('screen ', '') === target;
+    });
+    if(screenKey){ switchScreen(screenKey); showToast(`Гузариш ба ${screenKey}`); return; }
+  }
+  if(cmd.startsWith('show alert') || cmd.startsWith('alert')){
+    alert(rawCmd.replace(/show alert|alert/i, '').trim() || 'Action executed!');
+    return;
+  }
+  if(cmd.startsWith('open url') || cmd.startsWith('open http') || cmd.startsWith('open www')){
+    let url = rawCmd.replace(/open url|open/i, '').trim();
+    window.open(/^https?:\/\//i.test(url) ? url : 'https://' + url, '_blank');
+    return;
+  }
+
+  // 2) Freeform English → Groq AI → structured JSON action → applied to the DOM.
+  showToast('Иҷрои AI фармон...', 'success');
+  try {
+    const raw = await callGroqAI(AI_ACTION_SYSTEM_PROMPT, rawCmd, 150);
+    const cleaned = raw.replace(/```json|```/gi, '').trim();
+    const action = JSON.parse(cleaned);
+    const node = document.getElementById(el.id);
+    await applyAIAction(action, el, node);
+    showToast('Фармон бо AI иҷро шуд!');
+  } catch (err) {
+    console.warn('AI command failed:', err);
+    showToast('AI дастрас нашуд ё фармонро нафаҳмид', 'error');
+  }
+}
+
+// Toast notification helper
+function showToast(message, type='success'){
+  const toast = document.createElement('div');
+  toast.className = `fixed top-16 left-1/2 transform -translate-x-1/2 z-[60] px-4 py-2 rounded-lg text-xs font-bold transition-all duration-300`;
+  toast.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' : 'rgba(46,248,255,0.15)';
+  toast.style.border = `1px solid ${type === 'error' ? '#ef4444' : 'var(--neon-cyan)'}`;
+  toast.style.color = type === 'error' ? '#fca5a5' : 'var(--neon-cyan)';
+  toast.style.backdropFilter = 'blur(8px)';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(()=>{
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-10px)';
+    setTimeout(()=>toast.remove(), 300);
+  }, 2000);
+}
+
+function renderAll(){
+  canvasEl.innerHTML = '';
+  (screens[activeScreen] || []).forEach(renderElement);
+  pinnedElements.forEach(renderElement); // 📌 pinned elements render on every screen
+  renderLayerList();
+}
+
 function attachDrag(node, el){
   let startX=0, startY=0, origX=0, origY=0, dragging=false;
   node.addEventListener('pointerdown', e=>{
-    if(e.target.classList.contains('resize-handle')) return;
+    if(e.target.classList.contains('resize-handle') || e.target.closest('.quick-controls')) return;
     e.stopPropagation();
     dragging = true;
     node.setPointerCapture(e.pointerId);
@@ -490,15 +850,16 @@ function attachDrag(node, el){
   });
   node.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    const dx = e.clientX-startX, dy = e.clientY-startY;
-    el.x = origX+dx; el.y = origY+dy;
+    el.x = origX + (e.clientX-startX);
+    el.y = origY + (e.clientY-startY);
     node.style.left = el.x+'px'; node.style.top = el.y+'px';
   });
-  node.addEventListener('pointerup', e=>{ dragging=false; });
-  node.addEventListener('pointercancel', ()=>{ dragging=false; });
+  node.addEventListener('pointerup', ()=> dragging=false);
+  node.addEventListener('pointercancel', ()=> dragging=false);
 }
+
 function attachResize(handle, el, node){
-  let startX=0,startY=0,origW=0,origH=0,resizing=false;
+  let startX=0, startY=0, origW=0, origH=0, resizing=false;
   handle.addEventListener('pointerdown', e=>{
     e.stopPropagation();
     resizing=true;
@@ -508,37 +869,39 @@ function attachResize(handle, el, node){
   });
   handle.addEventListener('pointermove', e=>{
     if(!resizing) return;
-    const dx = e.clientX-startX, dy=e.clientY-startY;
-    el.w = Math.max(20, origW+dx);
-    el.h = Math.max(20, origH+dy);
+    el.w = Math.max(20, origW + (e.clientX-startX));
+    el.h = Math.max(20, origH + (e.clientY-startY));
     node.style.width=el.w+'px'; node.style.height=el.h+'px';
     if(el.id===selectedId) refreshPropPanel();
   });
-  handle.addEventListener('pointerup', ()=>{ resizing=false; });
-  handle.addEventListener('pointercancel', ()=>{ resizing=false; });
+  handle.addEventListener('pointerup', ()=> resizing=false);
+  handle.addEventListener('pointercancel', ()=> resizing=false);
 }
 
-/* ==================== SELECTION & PROPERTY PANEL ==================== */
+function findElementById(id){
+  return (screens[activeScreen]||[]).find(e=>e.id===id) || pinnedElements.find(e=>e.id===id);
+}
+
 function selectElement(id){
   selectedId = id;
-  elements.forEach(e=>{
+  [...(screens[activeScreen]||[]), ...pinnedElements].forEach(e=>{
     const n = document.getElementById(e.id);
     if(n) n.classList.toggle('selected', e.id===id);
   });
-  setPanelState(propPanel, true);
-  setPanelState(toolDrawer, false);
-  drawerOpen = false;
-  if(menuOpen){ menuOpen=false; setSidebarState(false); }
-  refreshPropPanel();
+  if(id){
+    refreshPropPanel();
+  } else {
+    setPanelState(propPanel, false);
+  }
   renderLayerList();
 }
+
 canvasEl.addEventListener('pointerdown', e=>{
   if(e.target===canvasEl){ selectedId=null; setPanelState(propPanel,false); renderLayerList(); }
 });
-
 document.getElementById('closePropBtn').onclick = ()=>{ setPanelState(propPanel,false); selectedId=null; renderLayerList(); };
 
-function getSelected(){ return elements.find(e=>e.id===selectedId); }
+function getSelected(){ return findElementById(selectedId); }
 
 function refreshPropPanel(){
   const el = getSelected();
@@ -553,245 +916,499 @@ function refreshPropPanel(){
   }
 
   if(el.type!=='image'){
-    const colorRow = row('Ранг (HEX)', `<div class="flex items-center gap-2">
-        <input type="color" id="propColor" value="${el.type==='text'||el.type==='icon'||el.type==='emoji' ? el.textColor : el.color}">
-        <input type="text" id="propColorHex" value="${el.type==='text'||el.type==='icon'||el.type==='emoji' ? el.textColor : el.color}" class="flex-1 bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] font-mono outline-none">
-      </div>`);
-    body.appendChild(colorRow);
+    body.appendChild(row('Ранг (HEX)', `<div class="flex items-center gap-2">
+        <input type="color" id="propColor" value="${['text','icon'].includes(el.type)?el.textColor:el.color}">
+        <input type="text" id="propColorHex" value="${['text','icon'].includes(el.type)?el.textColor:el.color}" class="flex-1 bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] font-mono outline-none">
+      </div>`));
   }
 
-  if(el.type==='rect'||el.type==='circle'||el.type==='water'){
-    body.appendChild(row('Шаффофият (Opacity)', `<input type="range" id="propOpacity" min="0" max="1" step="0.01" value="${el.opacity}" class="w-full">`));
+  if(['rect','circle','water'].includes(el.type)){
+    body.appendChild(row('Шаффофият', `<input type="range" id="propOpacity" min="0" max="1" step="0.01" value="${el.opacity}" class="w-full">`));
   }
-  if(el.type==='rect'||el.type==='image'||el.type==='circle'||el.type==='water'){
-    body.appendChild(row('Радиуси кунҷ (Radius)', `<input type="range" id="propRadius" min="0" max="300" value="${el.radius||0}" class="w-full">`));
+  if(['rect','image','circle','water'].includes(el.type)){
+    body.appendChild(row('Радиус', `<input type="range" id="propRadius" min="0" max="300" value="${el.radius||0}" class="w-full">`));
   }
   if(el.type==='text'){
     body.appendChild(row('Матн', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
-    body.appendChild(row('Шрифт', `<select id="propFont" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">
-        ${['Inter','Roboto','Poppins','JetBrains Mono'].map(f=>`<option value="${f}" ${el.fontFamily===f?'selected':''}>${f}</option>`).join('')}
-      </select>`));
-    body.appendChild(row('Андозаи ҳарф', `<input type="range" id="propFontSize" min="8" max="120" value="${el.fontSize}" class="w-full">`));
+    body.appendChild(row('Андоза', `<input type="range" id="propFontSize" min="8" max="120" value="${el.fontSize}" class="w-full">`));
   }
   if(el.type==='icon'){
-    body.appendChild(row('Номи иконка', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
+    body.appendChild(row('Иконка Векторӣ', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
     body.appendChild(row('Андоза', `<input type="range" id="propFontSize" min="12" max="160" value="${el.fontSize}" class="w-full">`));
   }
-  if(el.type==='emoji'){
-    body.appendChild(row('Эмодҷи', `<input type="text" id="propContent" value="${el.content}" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1 text-[11px] outline-none">`));
-    body.appendChild(row('Андоза', `<input type="range" id="propFontSize" min="12" max="200" value="${el.fontSize}" class="w-full">`));
-  }
-  body.appendChild(row('Гардиш (Rotation °)', `<input type="range" id="propRotation" min="0" max="360" value="${el.rotation||0}" class="w-full">`));
 
-  // bind events
+  const smartSection = document.createElement('div');
+  smartSection.className = 'mt-2 pt-2 border-t border-[rgba(255,46,196,0.3)]';
+  smartSection.innerHTML = `
+    <p class="text-[11px] font-bold text-[var(--neon-cyan)] mb-1 flex items-center gap-1">
+      <span class="material-symbols-outlined" style="font-size:14px;">bolt</span> SMART COMMAND (AI, ENGLISH)
+    </p>
+    <div class="bg-black/40 rounded-lg p-2 mb-2 border border-gray-800">
+      <p class="text-[9px] text-gray-400 mb-1">Фармони озоди англисӣ — AI онро мефаҳмад:</p>
+      <ul class="text-[9px] text-gray-500 space-y-0.5 list-disc pl-3">
+        <li><b>make the background color green</b></li>
+        <li><b>go to screen 2</b></li>
+        <li><b>change this text to Welcome</b></li>
+        <li><b>open google.com</b></li>
+      </ul>
+    </div>
+    <input type="text" id="propSmartCmd" value="${el.smartCommand||''}" placeholder="e.g. make the background color green" class="w-full bg-black/60 neon-border rounded-lg px-2 py-1.5 text-[11px] outline-none text-cyan-300 font-mono">
+  `;
+  body.appendChild(smartSection);
+
   const pc = document.getElementById('propColor');
   const pch = document.getElementById('propColorHex');
   if(pc){
-    // when changing color via color picker, update model and DOM but avoid full panel re-render to keep focus when typing
     pc.oninput = ()=>{
       const val = pc.value;
-      if(el.type==='text'||el.type==='icon'||el.type==='emoji'){ el.textColor = val;
-        const node = document.getElementById(el.id);
-        if(node){ const span = node.querySelector('span'); if(span) span.style.color = val; }
-      } else { el.color = val;
-        const node = document.getElementById(el.id); if(node) node.style.background = hexToRgba(el.color, el.opacity);
-      }
+      if(['text','icon'].includes(el.type)){ el.textColor = val; const n=document.getElementById(el.id); if(n){const s=n.querySelector('span');if(s)s.style.color=val;} }
+      else { el.color = val; const n=document.getElementById(el.id); if(n) n.style.background = hexToRgba(val, el.opacity); }
       if(pch) pch.value = val;
-    };
-    // typing hex in the input should not break focus on text input — update model and DOM directly
-    pch.oninput = ()=>{
-      const v = pch.value;
-      if(/^#[0-9a-fA-F]{0,6}$/.test(v) || v.length<=7){
-        if(el.type==='text'||el.type==='icon'||el.type==='emoji'){ el.textColor = v;
-          const node = document.getElementById(el.id); if(node){ const span = node.querySelector('span'); if(span) span.style.color = v; }
-        } else { el.color = v; const node = document.getElementById(el.id); if(node) node.style.background = hexToRgba(el.color||'#000000', el.opacity); }
-      }
-      // do not call applyProp to avoid re-creating inputs and losing focus
     };
   }
   const po = document.getElementById('propOpacity');
-  if(po) po.oninput = ()=> applyProp(el,'opacity',parseFloat(po.value));
+  if(po) po.oninput = ()=>{ el.opacity=parseFloat(po.value); renderElement(el); };
   const pr = document.getElementById('propRadius');
-  if(pr) pr.oninput = ()=> applyProp(el,'radius',parseInt(pr.value));
+  if(pr) pr.oninput = ()=>{ el.radius=parseInt(pr.value); renderElement(el); };
   const pcontent = document.getElementById('propContent');
-  if(pcontent) {
-    // IMPORTANT: update content directly and update DOM node text without re-rendering the whole panel.
-    pcontent.oninput = (e)=>{
-      el.content = e.target.value;
-      const node = document.getElementById(el.id);
-      if(node){
-        const span = node.querySelector('span');
-        if(span) span.textContent = el.content;
-      }
-      // do NOT call applyProp or selectElement here — that would refresh the panel and remove focus (causing keyboard to hide).
-    };
-  }
-  const pfont = document.getElementById('propFont');
-  if(pfont) pfont.onchange = ()=> applyProp(el,'fontFamily',pfont.value);
+  if(pcontent) pcontent.oninput = (e)=>{ el.content=e.target.value; renderElement(el); };
   const pfs = document.getElementById('propFontSize');
-  if(pfs) pfs.oninput = ()=> applyProp(el,'fontSize',parseInt(pfs.value));
-  const prot = document.getElementById('propRotation');
-  if(prot) prot.oninput = ()=>{ el.rotation=parseInt(prot.value); const n=document.getElementById(el.id); n.style.transform=`rotate(${el.rotation}deg)`; };
+  if(pfs) pfs.oninput = ()=>{ el.fontSize=parseInt(pfs.value); renderElement(el); };
+
+  const pcmd = document.getElementById('propSmartCmd');
+  if(pcmd) pcmd.oninput = (e)=>{ el.smartCommand = e.target.value; };
+
+  const pinBtn = document.getElementById('pinBtn');
+  pinBtn.classList.toggle('pin-active', !!el.pinned);
+  pinBtn.textContent = el.pinned ? '📌 Собит аст' : '📌 Собит';
 }
 
-function applyProp(el, key, value){
-  if(key==='color' && (el.type==='text'||el.type==='icon'||el.type==='emoji')){ el.textColor = value; }
-  else el[key] = value;
-  renderElement(el);
-  selectElement(el.id); // keep selection ring
-}
+// ===================== PIN / STICKY ELEMENT (📌 ба ҳамаи экранҳо) =====================
+document.getElementById('pinBtn').onclick = ()=>{
+  const el = getSelected(); if(!el) return;
+  const wasPinned = !!el.pinned;
+  const fromList = wasPinned ? pinnedElements : screens[activeScreen];
+  const toList = wasPinned ? screens[activeScreen] : pinnedElements;
 
-/* ==================== LAYERS LIST ==================== */
+  fromList.splice(fromList.indexOf(el), 1);
+  el.pinned = !wasPinned;
+  toList.push(el);
+
+  renderAll();
+  selectElement(el.id);
+  showToast(el.pinned ? 'Элемент собит шуд — дар ҳамаи экранҳо намоён' : 'Элемент бекор шуд аз собит');
+};
+
 function renderLayerList(){
   const list = document.getElementById('layerList');
   list.innerHTML='';
-  const sorted = [...elements].sort((a,b)=>b.zIndex-a.zIndex);
+  const combined = [...(screens[activeScreen]||[]), ...pinnedElements];
+  const sorted = combined.sort((a,b)=>b.zIndex-a.zIndex);
   sorted.forEach(el=>{
     const row = document.createElement('div');
     row.className = 'layer-row rounded-lg px-2 py-1 flex items-center justify-between text-[10px]'+(el.id===selectedId?' active':'');
-    row.innerHTML = `<span class="truncate flex-1">${iconFor(el.type)} ${labelFor(el)}</span>`;
-    row.onclick = ()=> selectElement(el.id);
+    const actionBadge = el.smartCommand ? `<span class="text-[var(--neon-cyan)] ml-1" title="Smart Command">⚡</span>` : '';
+    const pinBadge = el.pinned ? `<span class="text-yellow-300 ml-1" title="Собит">📌</span>` : '';
+    row.innerHTML = `<span class="truncate flex-1">${iconFor(el.type)} ${labelFor(el)} ${actionBadge}${pinBadge}</span>`;
+    row.onclick = ()=> { selectElement(el.id); setPanelState(propPanel, true); };
     list.appendChild(row);
   });
-  if(sorted.length===0) list.innerHTML = '<p class="text-gray-500 text-[10px] px-1">Ҳанӯз элементе нест</p>';
 }
-function iconFor(type){
-  return {rect:'▭',circle:'◯',text:'T',icon:'★',emoji:'😊',image:'🖼',water:'💧'}[type]||'•';
-}
+
+function iconFor(type){ return {rect:'▭',circle:'◯',text:'T',icon:'★',image:'🖼',water:'💧'}[type]||'•'; }
 function labelFor(el){
-  if(el.type==='text') return el.content.slice(0,14)||'Матн';
+  if(el.type==='text') return el.content.slice(0,12)||'Матн';
   if(el.type==='icon') return el.content;
-  if(el.type==='emoji') return el.content;
   return {rect:'Чоркунҷа', circle:'Доира', image:'Акс', water:'Об-Овэрлей'}[el.type]||el.type;
 }
 
-/* ==================== TOP ACTIONS: front/back/delete ==================== */
 document.getElementById('frontBtn').onclick = ()=>{
   const el = getSelected(); if(!el) return;
-  const maxZ = Math.max(...elements.map(e=>e.zIndex), 0);
-  el.zIndex = maxZ+1;
+  const curr = getListOf(el);
+  el.zIndex = Math.max(...curr.map(e=>e.zIndex), 0) + 1;
   renderElement(el); renderLayerList();
 };
 document.getElementById('backBtn').onclick = ()=>{
   const el = getSelected(); if(!el) return;
-  const minZ = Math.min(...elements.map(e=>e.zIndex), 0);
-  el.zIndex = minZ-1;
+  const curr = getListOf(el);
+  el.zIndex = Math.min(...curr.map(e=>e.zIndex), 0) - 1;
   renderElement(el); renderLayerList();
 };
 document.getElementById('delBtn').onclick = ()=>{
   const el = getSelected(); if(!el) return;
-  const node = document.getElementById(el.id);
-  if(node) node.remove();
-  elements = elements.filter(e=>e.id!==el.id);
+  document.getElementById(el.id)?.remove();
+  const list = getListOf(el);
+  const idx = list.indexOf(el);
+  if(idx>=0) list.splice(idx,1);
   selectedId = null;
   setPanelState(propPanel,false);
   renderLayerList();
 };
 
-/* ==================== CANVAS BG / SIZE EDIT (post-setup) ==================== */
 function editCanvasBg(){
-  const hex = prompt('Ранги нави заминаи варақ (HEX):', CANVAS.bg);
+  const hex = prompt('Ранги заминаи варақ (HEX):', CANVAS.bg);
   if(!hex) return;
-  const op = prompt('Шаффофият аз 0 то 1:', CANVAS.opacity);
   CANVAS.bg = hex;
-  CANVAS.opacity = op!==null ? Math.min(1,Math.max(0,parseFloat(op))) : CANVAS.opacity;
   initCanvas();
 }
 function editCanvasSize(){
-  const w = prompt('Ширинаи нав (px):', CANVAS.w);
-  const h = prompt('Баландии нав (px):', CANVAS.h);
+  const w = prompt('Ширина (px):', CANVAS.w);
+  const h = prompt('Баландӣ (px):', CANVAS.h);
   if(w) CANVAS.w = parseInt(w)||CANVAS.w;
   if(h) CANVAS.h = parseInt(h)||CANVAS.h;
   initCanvas();
 }
 
-/* ==================== SAVE / LOAD (persistent window.storage, on-device across sessions) ==================== */
-const SAVE_KEY = 'zerohub_saves_v1';
-async function loadSavesFromStorage(){
-  try{
-    const res = await window.storage.get(SAVE_KEY, false);
-    return res && res.value ? JSON.parse(res.value) : [];
-  }catch(e){ return []; }
+// LOCAL STORAGE & 3-DOTS MENU
+const SAVE_KEY = 'zerohbui_projects_v1';
+async function loadSaves(){
+  try{ return JSON.parse(localStorage.getItem(SAVE_KEY)) || []; }catch(e){ return []; }
 }
-async function saveSavesToStorage(list){
-  try{
-    await window.storage.set(SAVE_KEY, JSON.stringify(list), false);
-  }catch(e){ console.error('Хатогии захиракунӣ:', e); alert('Хатогӣ ҳангоми захира кардан рӯй дод.'); }
+async function saveSaves(list){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(list)); }catch(e){}
 }
-async function saveCurrentState(name){
-  const list = await loadSavesFromStorage();
-  const snapshot = {
-    name: name || ('project-'+(new Date()).toISOString()),
-    date: (new Date()).toISOString(),
-    data: { CANVAS, elements }
-  };
-  list.unshift(snapshot); // newest first
-  await saveSavesToStorage(list);
-  await renderSavesList();
-}
+
 async function renderSavesList(){
-  const list = await loadSavesFromStorage();
-  const container = document.getElementById('savesList');
-  container.innerHTML = '';
-  if(list.length===0){ container.innerHTML = '<p class="text-gray-400 text-[12px]">Ҳеҷ лоиҳаи пешина вуҷуд надорад</p>'; return; }
+  const list = await loadSaves();
+  const c = document.getElementById('savesList');
+  c.innerHTML = '';
+  if(list.length===0){ c.innerHTML = '<p class="text-gray-400 text-[12px] text-center py-4">Лоиҳае нест. Лоиҳаи аввалинро сабт намоед!</p>'; return; }
+
   list.forEach((s, idx)=>{
     const it = document.createElement('div');
-    it.className = 'layer-row rounded-lg px-2 py-2 flex items-center justify-between cursor-pointer';
-    it.innerHTML = `<div class="flex flex-col flex-1 min-w-0" data-idx="${idx}" data-action="load">
-        <strong class="text-[12px] truncate">${s.name}</strong>
-        <span class="text-[10px] text-gray-400">${new Date(s.date).toLocaleString()}</span>
+    it.className = 'layer-row rounded-lg px-2 py-2 flex items-center justify-between relative hover:border-pink-500/50 transition-colors';
+    it.innerHTML = `
+      <div class="flex flex-col flex-1 min-w-0 cursor-pointer" onclick="loadSave(${idx})">
+        <strong class="text-[12px] truncate text-cyan-300 glow-text-cyan">${s.name}</strong>
+        <span class="text-[9px] text-gray-400">${new Date(s.date).toLocaleTimeString()} • ${Object.keys(s.data.screens||{}).length} экран</span>
       </div>
-      <button class="text-red-400 px-2" data-idx="${idx}" data-action="delete">
-        <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-      </button>`;
-    container.appendChild(it);
-    it.querySelector('[data-action="load"]').addEventListener('click', ()=> loadSave(idx));
-    it.querySelector('[data-action="delete"]').addEventListener('click', (ev)=>{ ev.stopPropagation(); deleteSave(idx); });
+      <button class="text-gray-300 px-2 py-1 font-bold text-sm hover:text-pink-400 transition-colors" onclick="toggle3DotsMenu(event, ${idx})">⋮</button>
+      <div id="dropdown-${idx}" class="dropdown-menu">
+        <div class="dropdown-item text-red-400 hover:bg-red-900/20" onclick="deleteSave(${idx})"><span class="material-symbols-outlined text-xs">delete</span> Нест кардан</div>
+        <div class="dropdown-item text-cyan-400 hover:bg-cyan-900/20" onclick="downloadSaveJson(${idx})"><span class="material-symbols-outlined text-xs">download</span> Боргирӣ (JSON)</div>
+        <div class="dropdown-item text-green-400 hover:bg-green-900/20" onclick="generateCodeModal(${idx})"><span class="material-symbols-outlined text-xs">code</span> HTML/CSS/JS Код</div>
+      </div>
+    `;
+    c.appendChild(it);
   });
-}
-async function loadSave(index){
-  const list = await loadSavesFromStorage();
-  if(!list[index]) return alert('Лоиҳа ёфта нашуд');
-  const snap = list[index];
-  CANVAS = JSON.parse(JSON.stringify(snap.data.CANVAS));
-  elements = JSON.parse(JSON.stringify(snap.data.elements || []));
-  canvasEl.innerHTML = '';
-  let maxId = 0;
-  elements.forEach(e=>{
-    const m = (e.id||'').match(/el(\d+)$/);
-    if(m) maxId = Math.max(maxId, parseInt(m[1]));
-  });
-  uidCounter = maxId+1;
-  selectedId = null;
-  setPanelState(propPanel,false);
-  renderAll();
-  initCanvas();
-  menuOpen = false;
-  setSidebarState(false);
-}
-async function deleteSave(index){
-  const list = await loadSavesFromStorage();
-  if(!list[index]) return;
-  if(!confirm('Лоиҳаи "'+list[index].name+'" нест карда шавад?')) return;
-  list.splice(index,1);
-  await saveSavesToStorage(list);
-  await renderSavesList();
 }
 
-/* ==================== SAVE BUTTON HOOKS ==================== */
-document.getElementById('addSaveBtn').onclick = async ()=>{
-  const name = prompt('Номи лоиҳаро ворид кунед (масалан: my_project):','my_design');
-  if(!name) return;
-  await saveCurrentState(name);
+function toggle3DotsMenu(e, idx){
+  e.stopPropagation();
+  document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('show'));
+  const menu = document.getElementById(`dropdown-${idx}`);
+  if(menu) menu.classList.toggle('show');
+}
+
+document.addEventListener('click', ()=> document.querySelectorAll('.dropdown-menu').forEach(m=>m.classList.remove('show')));
+
+async function deleteSave(idx){
+  if(!confirm('Лоиҳа нест карда шавад?')) return;
+  const list = await loadSaves();
+  list.splice(idx,1);
+  await saveSaves(list);
+  renderSavesList();
+}
+
+async function downloadSaveJson(idx){
+  const list = await loadSaves();
+  const proj = list[idx];
+  const blob = new Blob([JSON.stringify(proj.data, null, 2)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${proj.name}_zerohbui.json`;
+  link.click();
+}
+
+// COMPLETE CLEAN HTML/CSS/JS CODE GENERATOR (includes 📌 pinned elements + live Groq AI commands)
+async function generateCodeModal(idx){
+  const list = await loadSaves();
+  const proj = list[idx];
+  const fullCode = generateProjectCode(proj);
+  document.getElementById('codeTextarea').value = fullCode;
+  document.getElementById('codeModal').classList.remove('hidden');
+}
+
+function buildElementMarkup(el, screenId, eIdx, screenNames){
+  const safeContent = (el.content || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  let styles = [];
+  styles.push(`position:absolute`);
+  styles.push(`left:${el.x}px`);
+  styles.push(`top:${el.y}px`);
+  styles.push(`width:${el.w}px`);
+  styles.push(`height:${el.h}px`);
+  styles.push(`z-index:${(el.pinned?5000:0) + (el.zIndex || 0)}`);
+  if(el.radius) styles.push(`border-radius:${el.radius}px`);
+
+  let clickAttr = '';
+  if(el.smartCommand && el.smartCommand.trim()){
+    const cmd = el.smartCommand.trim();
+    const lowerCmd = cmd.toLowerCase();
+    if(lowerCmd.startsWith('go to screen') || lowerCmd.startsWith('screen') || lowerCmd.startsWith('open screen')){
+      const target = lowerCmd.replace(/go to screen|screen|open screen/g, '').trim();
+      const targetScreen = screenNames.find(s => {
+        const l = s.toLowerCase();
+        return l === target || l === 'screen ' + target || l.replace('screen ', '') === target;
+      });
+      if(targetScreen){
+        const targetIdx = screenNames.indexOf(targetScreen);
+        clickAttr = ` onclick="switchScreen('screen_${targetIdx}')" style="cursor:pointer"`;
+      }
+    } else if(lowerCmd.startsWith('show alert') || lowerCmd.startsWith('alert')){
+      const msg = cmd.replace(/show alert|alert/gi, '').trim() || 'Action executed!';
+      clickAttr = ` onclick="alert('${msg.replace(/'/g, "\\'")}')" style="cursor:pointer"`;
+    } else if(lowerCmd.startsWith('open url') || lowerCmd.startsWith('open http') || lowerCmd.startsWith('open www')){
+      let url = cmd.replace(/open url|open/gi, '').trim();
+      if(url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      clickAttr = ` onclick="window.open('${url}', '_blank')" style="cursor:pointer"`;
+    } else {
+      // Freeform instruction — resolved live by Groq AI in the exported app.
+      const escaped = cmd.replace(/"/g,'&quot;');
+      clickAttr = ` data-ai-cmd="${escaped}" onclick="zhRunAICommand(this)" style="cursor:pointer"`;
+    }
+  }
+
+  if(el.type === 'rect' || el.type === 'circle'){
+    const radius = el.type === 'circle' ? '50%' : (el.radius ? el.radius + 'px' : '0');
+    const bg = hexToRgba(el.color, el.opacity);
+    return `<div class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; background:${bg}; border-radius:${radius};"${clickAttr}></div>`;
+  }
+  if(el.type === 'rounded'){
+    const bg = hexToRgba(el.color, el.opacity);
+    return `<div class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; background:${bg}; border-radius:${el.radius || 20}px;"${clickAttr}></div>`;
+  }
+  if(el.type === 'water'){
+    const bg1 = hexToRgba(el.color, el.opacity);
+    const bg2 = hexToRgba('#8b2eff', (el.opacity || 0.22) * 0.6);
+    return `<div class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; background:linear-gradient(180deg, ${bg1}, ${bg2}); border:1px solid rgba(46,248,255,0.4); border-radius:${el.radius || 90}px;"${clickAttr}></div>`;
+  }
+  if(el.type === 'text'){
+    return `<div class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; background:transparent; display:flex; align-items:center; justify-content:center;"${clickAttr}>
+      <span data-el-text style="color:${el.textColor}; font-family:${el.fontFamily || 'Inter'}, sans-serif; font-size:${el.fontSize || 22}px; font-weight:700; text-align:center; width:100%;">${safeContent || 'Text'}</span>
+    </div>`;
+  }
+  if(el.type === 'icon'){
+    return `<div class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; background:transparent; display:flex; align-items:center; justify-content:center;"${clickAttr}>
+      <span class="material-symbols-outlined" style="color:${el.textColor}; font-size:${el.fontSize || 48}px;">${el.content || 'star'}</span>
+    </div>`;
+  }
+  if(el.type === 'image'){
+    return `<img src="${safeContent}" class="${screenId}_el" data-el-id="${el.id}" style="${styles.join(';')}; object-fit:cover; border-radius:${el.radius || 0}px;" alt="image"${clickAttr}>`;
+  }
+  return '';
+}
+
+function generateProjectCode(proj){
+  const data = proj.data;
+  const canvas = data.CANVAS;
+  const allScreens = data.screens || {};
+  const screenNames = Object.keys(allScreens);
+  const pinned = data.pinnedElements || [];
+
+  let screenDivs = [];
+
+  screenNames.forEach((screenName, sIdx) => {
+    const screenId = 'screen_' + sIdx;
+    const elements = allScreens[screenName] || [];
+    const isActive = sIdx === 0 ? 'active' : '';
+
+    const ownHtml = elements.map((el, eIdx) => buildElementMarkup(el, screenId, eIdx, screenNames)).join('\n      ');
+    const pinnedHtml = pinned.map((el, eIdx) => buildElementMarkup(el, screenId, 'pin'+eIdx, screenNames)).join('\n      ');
+
+    screenDivs.push(`    <div id="${screenId}" class="app-screen ${isActive}" style="width:${canvas.w}px; height:${canvas.h}px; position:relative; background:${hexToRgba(canvas.bg, canvas.opacity || 1)}; overflow:hidden; border-radius:12px; display:none;">
+      ${ownHtml}
+      ${pinnedHtml}
+    </div>`);
+  });
+
+  return `<!DOCTYPE html>
+<html lang="tg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>${proj.name} — ZEROHBUI Studio Pro Export</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto:wght@400;500;700&family=Poppins:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background: #050507;
+    color: #f2f2f7;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #app-container {
+    position: relative;
+    box-shadow: 0 0 40px rgba(255,46,196,0.2), 0 0 80px rgba(139,46,255,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .app-screen {
+    position: absolute;
+    top: 0; left: 0;
+    transition: opacity 0.3s ease;
+  }
+  .app-screen.active { display: block !important; opacity: 1; }
+  .app-screen:not(.active) { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+  <div id="app-container">
+${screenDivs.join('\n')}
+  </div>
+
+<script>
+  // ⚠️ SECURITY NOTE: the Groq API key below is embedded client-side for the
+  // "AI smart command" feature to work in this standalone export. Anyone who
+  // views this page's source can read and reuse the key. Rotate it if this
+  // file is shared publicly, or move this call behind your own backend proxy.
+  const GROQ_API_KEY = "${GROQ_API_KEY}";
+  const GROQ_MODEL = "${GROQ_MODEL}";
+  const GROQ_ENDPOINT = "${GROQ_ENDPOINT}";
+
+  function switchScreen(screenId){
+    document.querySelectorAll('.app-screen').forEach(s => {
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+    const target = document.getElementById(screenId);
+    if(target){
+      target.style.display = 'block';
+      requestAnimationFrame(() => target.classList.add('active'));
+    }
+  }
+
+  async function zhRunAICommand(elNode){
+    const cmd = elNode.getAttribute('data-ai-cmd');
+    if(!cmd) return;
+    try{
+      const res = await fetch(GROQ_ENDPOINT, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + GROQ_API_KEY },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          temperature: 0.2,
+          max_tokens: 150,
+          messages: [
+            { role:'system', content:'You are a UI action interpreter. Given a plain-English instruction, reply with ONLY a raw JSON object: {"type":"style","css":{...}} or {"type":"text","content":"..."} or {"type":"navigate","screen":"Screen 2"} or {"type":"alert","message":"..."} or {"type":"url","href":"..."}. No markdown, no explanation.' },
+            { role:'user', content: cmd }
+          ]
+        })
+      });
+      const data = await res.json();
+      const raw = (data.choices && data.choices[0] && data.choices[0].message.content || '').replace(/\`\`\`json|\`\`\`/gi,'').trim();
+      const action = JSON.parse(raw);
+      if(action.type === 'style'){
+        Object.assign(elNode.style, action.css || {});
+      } else if(action.type === 'text'){
+        const span = elNode.querySelector('[data-el-text]');
+        if(span) span.textContent = action.content || span.textContent;
+      } else if(action.type === 'navigate'){
+        const target = String(action.screen||'').toLowerCase();
+        const match = [...document.querySelectorAll('.app-screen')].find(s=>{
+          const idx = s.id.replace('screen_','');
+          return target === idx || ('screen '+ (parseInt(idx)+1)) === target;
+        });
+        if(match) switchScreen(match.id);
+      } else if(action.type === 'alert'){
+        alert(action.message || 'Action executed!');
+      } else if(action.type === 'url'){
+        let url = action.href || '';
+        if(url && !/^https?:\\/\\//i.test(url)) url = 'https://' + url;
+        if(url) window.open(url, '_blank');
+      }
+    }catch(e){
+      console.warn('AI command failed in exported app:', e);
+    }
+  }
+
+  switchScreen('screen_0');
+<\/script>
+</body>
+</html>`;
+}
+
+document.getElementById('closeCodeModal').onclick = ()=> document.getElementById('codeModal').classList.add('hidden');
+document.getElementById('copyCodeBtn').onclick = ()=>{
+  const t = document.getElementById('codeTextarea');
+  t.select();
+  document.execCommand('copy');
+  showToast('Код нусхабардорӣ шуд!');
 };
+
+document.getElementById('downloadCodeBtn').onclick = ()=>{
+  const code = document.getElementById('codeTextarea').value;
+  if(!code) return;
+  const blob = new Blob([code], {type:'text/html'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'zerohbui_export.html';
+  link.click();
+  showToast('Файл боргирӣ шуд!');
+};
+
+async function loadSave(idx){
+  const list = await loadSaves();
+  if(!list[idx]) return;
+  CANVAS = JSON.parse(JSON.stringify(list[idx].data.CANVAS));
+  screens = JSON.parse(JSON.stringify(list[idx].data.screens||{"Screen 1":[]}));
+  pinnedElements = JSON.parse(JSON.stringify(list[idx].data.pinnedElements||[]));
+  activeScreen = Object.keys(screens)[0] || "Screen 1";
+  initCanvas();
+  renderScreensBar();
+  renderAll();
+  menuOpen = false; setSidebarState(false);
+  showToast('Лоиҳа бор шуд!');
+}
+
+document.getElementById('addSaveBtn').onclick = async ()=>{
+  const name = prompt('Номи лоиҳаи ZEROHBUI:','zerohbui_project');
+  if(!name) return;
+  const list = await loadSaves();
+  list.unshift({ name, date:(new Date()).toISOString(), data:{CANVAS, screens, pinnedElements} });
+  await saveSaves(list); await renderSavesList();
+  showToast('Лоиҳа сабт шуд!');
+};
+
 document.getElementById('closeSaveSidebar').onclick = ()=>{ menuOpen=false; setSidebarState(false); };
 
-// on load: render saves list so opening the panel later shows existing projects
+document.getElementById('exportImageBtn').onclick = async ()=>{
+  if(typeof html2canvas === 'undefined'){
+    alert('html2canvas бор нашудааст!');
+    return;
+  }
+  try{
+    const canvas = await html2canvas(canvasEl, { backgroundColor: null, scale: 2 });
+    const link = document.createElement('a');
+    link.download = 'zerohbui_design.png';
+    link.href = canvas.toDataURL();
+    link.click();
+    showToast('Акс сабт шуд!');
+  }catch(e){
+    showToast('Хатогӣ дар сабти акс', 'error');
+  }
+};
+
+document.getElementById('exportJsonBtn').onclick = ()=>{
+  const data = { CANVAS, screens, pinnedElements };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'zerohbui_current.json';
+  link.click();
+  showToast('JSON боргирӣ шуд!');
+};
+
+document.getElementById('apkBuildBtn').onclick = ()=>{
+  alert('Ин хусусият дар версияи оянда дастрас хоҳад шуд!\n\nБарои ҳозир лоиҳаро ҳамчун HTML боргирӣ кунед.');
+};
+
+renderScreensBar();
 renderSavesList();
-
-/* ==================== small helpers for keyboard issue: already handled in refreshPropPanel ==================== */
-
-// --- end of script
 </script>
 </body>
 </html>
